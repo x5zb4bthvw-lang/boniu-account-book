@@ -25,57 +25,34 @@
     <div class="nav-header">
       <div class="nav-title">🌸 波妞记账</div>
       <button class="nav-icon" onclick="showSearch()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
     </div>
 
-    <!-- 月份选择 -->
     <div class="month-picker">
       <button class="month-picker-arrow" onclick="homePrevMonth()">‹</button>
       <span class="month-picker-text" id="home-month-title"></span>
       <button class="month-picker-arrow" id="home-next-arrow" onclick="homeNextMonth()">›</button>
     </div>
 
-    <!-- 净资产卡片 -->
     <div class="networth-card">
       <div class="networth-label">本月净资产</div>
       <div class="networth-amount" id="home-networth">¥ 0.00</div>
       <div class="networth-row">
-        <div class="networth-item">
-          <div class="networth-item-label">资产</div>
-          <div class="networth-item-value" id="home-assets">¥ 0.00</div>
-        </div>
-        <div class="networth-item">
-          <div class="networth-item-label">负债</div>
-          <div class="networth-item-value" id="home-liabilities">¥ 0.00</div>
-        </div>
+        <div class="networth-item"><div class="networth-item-label">资产</div><div class="networth-item-value" id="home-assets">¥ 0.00</div></div>
+        <div class="networth-item"><div class="networth-item-label">负债</div><div class="networth-item-value" id="home-liabilities">¥ 0.00</div></div>
       </div>
     </div>
 
-    <!-- 收支双栏 -->
     <div class="dual-cards mt-12">
-      <div class="dual-card">
-        <div class="dual-card-label">📈 本月收入</div>
-        <div class="dual-card-amount income" id="home-income">¥ 0.00</div>
-      </div>
-      <div class="dual-card">
-        <div class="dual-card-label">📉 本月支出</div>
-        <div class="dual-card-amount expense" id="home-expense">¥ 0.00</div>
-      </div>
+      <div class="dual-card"><div class="dual-card-label">📈 本月收入</div><div class="dual-card-amount income" id="home-income">¥ 0.00</div></div>
+      <div class="dual-card"><div class="dual-card-label">📉 本月支出</div><div class="dual-card-amount expense" id="home-expense">¥ 0.00</div></div>
     </div>
 
-    <!-- 快速文本记账入口 -->
-    <div class="card mt-12" onclick="showTextTxn()" style="cursor:pointer">
-      <div style="display:flex;align-items:center;gap:8px;color:var(--text-secondary);font-size:15px">
-        <span style="font-size:16px">💬</span> 说说你今天花了什么...
-      </div>
-    </div>
-
-    <!-- 最近交易 -->
     <div class="section-title">最近交易</div>
     <div class="empty-state hidden" id="home-empty">
       <div style="font-size:32px">📝</div>
-      <div class="empty-state-text">本月还没有记录</div>
+      <div class="empty-state-text">还没有记录</div>
       <div class="empty-state-text" style="font-size:12px;margin-top:4px">点击右下角 + 开始记账吧</div>
     </div>
     <div class="txn-list" id="home-txn-list"></div>
@@ -87,58 +64,33 @@
       <div class="nav-title">统计</div>
       <div style="width:36px"></div>
     </div>
-
-    <!-- 年份选择 -->
     <div class="month-picker">
       <button class="month-picker-arrow" onclick="statsPrevYear()">‹</button>
       <span class="month-picker-text" id="stats-year-title"></span>
       <button class="month-picker-arrow" id="stats-next-year" onclick="statsNextYear()">›</button>
     </div>
-
-    <!-- 年度汇总 -->
     <div class="dual-cards">
       <div class="dual-card"><div class="dual-card-label">总收入</div><div class="dual-card-amount income" id="stats-year-income">¥ 0</div></div>
       <div class="dual-card"><div class="dual-card-label">总支出</div><div class="dual-card-amount expense" id="stats-year-expense">¥ 0</div></div>
       <div class="dual-card"><div class="dual-card-label">结余</div><div class="dual-card-amount" style="color:var(--primary)" id="stats-year-balance">¥ 0</div></div>
     </div>
-
-    <!-- 子 Tab -->
     <div class="segment mt-16" id="stats-tab-bar">
       <button class="segment-btn active" data-tab="overview" onclick="switchStatsTab('overview')">概览</button>
       <button class="segment-btn" data-tab="expense" onclick="switchStatsTab('expense')">支出</button>
       <button class="segment-btn" data-tab="income" onclick="switchStatsTab('income')">收入</button>
     </div>
-
-    <!-- 概览 -->
     <div id="stats-overview">
-      <div class="chart-container mt-16">
-        <div class="chart-title">月度收支趋势</div>
-        <canvas id="chart-monthly" style="height:200px"></canvas>
-        <div class="chart-legend">
-          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:rgba(52,199,89,.6)"></div>收入</div>
-          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:rgba(255,59,48,.6)"></div>支出</div>
-        </div>
-      </div>
+      <div class="chart-container mt-16"><div class="chart-title">月度收支趋势</div><canvas id="chart-monthly" style="height:200px"></canvas></div>
       <div class="section-title mt-16">月度汇总</div>
       <div class="txn-list" id="stats-monthly-list"></div>
     </div>
-
-    <!-- 支出 -->
     <div id="stats-expense" class="hidden">
-      <div class="chart-container mt-16">
-        <div class="chart-title">支出分类占比</div>
-        <canvas id="chart-expense-pie" style="height:180px"></canvas>
-      </div>
+      <div class="chart-container mt-16"><div class="chart-title">支出分类占比</div><canvas id="chart-expense-pie" style="height:180px"></canvas></div>
       <div class="section-title mt-8">支出排行</div>
       <div class="txn-list" id="stats-expense-list"></div>
     </div>
-
-    <!-- 收入 -->
     <div id="stats-income" class="hidden">
-      <div class="chart-container mt-16">
-        <div class="chart-title">收入分类占比</div>
-        <canvas id="chart-income-pie" style="height:180px"></canvas>
-      </div>
+      <div class="chart-container mt-16"><div class="chart-title">收入分类占比</div><canvas id="chart-income-pie" style="height:180px"></canvas></div>
       <div class="section-title mt-8">收入排行</div>
       <div class="txn-list" id="stats-income-list"></div>
     </div>
@@ -148,7 +100,7 @@
   <div class="page" id="page-assets">
     <div class="nav-header">
       <div class="nav-title">资产管家</div>
-      <button class="nav-icon" onclick="showAddAccount()">+</button>
+      <button class="nav-icon" onclick="showAddAccount()" style="font-size:20px;font-weight:300">+</button>
     </div>
     <div class="card mt-8" style="padding:16px">
       <div style="display:flex;justify-content:space-between;margin-bottom:8px">
@@ -156,8 +108,7 @@
         <div style="text-align:right"><div style="font-size:12px;color:var(--text-secondary)">总负债</div><div style="font-size:18px;font-weight:700;color:var(--expense-red)" id="asset-total-liabilities">¥ 0.00</div></div>
       </div>
       <div style="border-top:.5px solid var(--divider);padding-top:8px;display:flex;justify-content:space-between">
-        <span style="font-size:13px;color:var(--text-secondary)">净资产</span>
-        <span style="font-size:20px;font-weight:700" id="asset-networth">¥ 0.00</span>
+        <span style="font-size:13px;color:var(--text-secondary)">净资产</span><span style="font-size:20px;font-weight:700" id="asset-networth">¥ 0.00</span>
       </div>
     </div>
     <div class="section-title mt-12">账户列表</div>
@@ -172,108 +123,58 @@
     </div>
     <div class="section-title">数据管理</div>
     <div class="settings-list">
-      <div class="settings-item" onclick="triggerCSVImport()">
-        <span class="settings-item-icon">📥</span>
-        <span class="settings-item-label">导入 CSV 数据</span>
-      </div>
+      <div class="settings-item" onclick="triggerCSVImport()"><span class="settings-item-icon">📥</span><span class="settings-item-label">导入 CSV 数据</span></div>
       <div class="settings-divider"></div>
-      <div class="settings-item" onclick="triggerCSVExport()">
-        <span class="settings-item-icon">📤</span>
-        <span class="settings-item-label">导出 CSV 数据</span>
-      </div>
+      <div class="settings-item" onclick="triggerCSVExport()"><span class="settings-item-icon">📤</span><span class="settings-item-label">导出 CSV 数据</span></div>
     </div>
     <div class="section-title mt-16">设置</div>
     <div class="settings-list">
-      <div class="settings-item" onclick="showCatManagement()">
-        <span class="settings-item-icon">📋</span>
-        <span class="settings-item-label">分类管理</span>
-      </div>
+      <div class="settings-item" onclick="showCatManagement()"><span class="settings-item-icon">🏷️</span><span class="settings-item-label">类别设置</span><span style="font-size:12px;color:var(--text-secondary)">一级 / 二级类目管理</span></div>
     </div>
     <div class="section-title mt-16">关于</div>
     <div class="settings-list">
-      <div class="settings-item" style="cursor:default">
-        <span class="settings-item-label">版本</span>
-        <span class="settings-item-value">1.0.0</span>
-      </div>
+      <div class="settings-item" style="cursor:default"><span class="settings-item-label">版本</span><span class="settings-item-value">1.0.0</span></div>
     </div>
   </div>
 
-  <!-- ==================== 记账表单页 ==================== -->
-  <div class="page" id="page-txn-form">
+  <!-- ==================== 记一笔 - 第一步：选一级分类 ==================== -->
+  <div class="page" id="page-txn-step1">
     <div class="nav-header">
-      <button class="nav-icon" onclick="closeTxnForm()">取消</button>
+      <button class="nav-icon" onclick="closeTxn()">取消</button>
       <div class="nav-title">记一笔</div>
-      <button class="nav-icon" onclick="saveTxn()" style="font-size:15px;font-weight:600;width:auto;padding:0 8px">保存</button>
+      <div style="width:44px"></div>
     </div>
-
-    <!-- 收支类型 -->
     <div class="segment" style="margin:0 60px" id="txn-segment">
       <button class="segment-btn expense active" data-type="expense" onclick="switchTxnType('expense')">支出</button>
       <button class="segment-btn income" data-type="income" onclick="switchTxnType('income')">收入</button>
     </div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
 
-    <!-- 金额显示 -->
-    <div style="text-align:center;padding:16px 0 8px">
-      <div style="font-size:36px;font-weight:800;color:var(--text)" id="txn-amount-display">¥ 0</div>
+  <!-- ==================== 记一笔 - 第二步：输入金额 ==================== -->
+  <div class="page" id="page-txn-step2">
+    <div class="nav-header">
+      <button class="nav-icon" onclick="backToStep1()">←</button>
+      <div class="nav-title" id="step2-title"></div>
+      <div style="width:44px"></div>
     </div>
-
-    <!-- 表单字段 -->
-    <div class="card" style="padding:0">
-      <div class="form-row" onclick="showCatPicker()">
-        <span class="form-row-icon" style="color:var(--primary)">🏷️</span>
-        <span class="form-row-label">分类</span>
-        <span class="form-row-value" id="txn-cat-display">选择分类</span>
-        <span class="form-row-arrow">›</span>
-      </div>
-      <div style="height:.5px;background:var(--divider);margin-left:48px"></div>
-      <div class="form-row" onclick="showDatePicker()">
-        <span class="form-row-icon" style="color:#007AFF">📅</span>
-        <span class="form-row-label">日期</span>
-        <span class="form-row-value" id="txn-date-display"></span>
-        <span class="form-row-arrow">›</span>
-      </div>
-      <div style="height:.5px;background:var(--divider);margin-left:48px"></div>
-      <div class="form-row" style="cursor:text">
-        <span class="form-row-icon" style="color:#999">✏️</span>
-        <span class="form-row-label">备注</span>
-        <input class="form-row-value" id="txn-note-input" placeholder="选填" style="border:none;outline:none;background:none;font-size:15px">
-      </div>
-    </div>
-
-    <!-- 数字键盘 -->
-    <div class="num-pad" style="position:fixed;bottom:0;width:100%;max-width:428px">
+    <div class="txn-step2-amount" id="step2-amount">¥ 0</div>
+    <div class="txn-meta-row" id="step2-meta"></div>
+    <div class="num-pad">
       <div class="num-row"><button class="num-key" onclick="numKeyTap('1')">1</button><button class="num-key" onclick="numKeyTap('2')">2</button><button class="num-key" onclick="numKeyTap('3')">3</button></div>
       <div class="num-row"><button class="num-key" onclick="numKeyTap('4')">4</button><button class="num-key" onclick="numKeyTap('5')">5</button><button class="num-key" onclick="numKeyTap('6')">6</button></div>
       <div class="num-row"><button class="num-key" onclick="numKeyTap('7')">7</button><button class="num-key" onclick="numKeyTap('8')">8</button><button class="num-key" onclick="numKeyTap('9')">9</button></div>
       <div class="num-row"><button class="num-key" onclick="numKeyTap('.')" style="font-size:26px">.</button><button class="num-key" onclick="numKeyTap('0')">0</button><button class="num-key" onclick="numKeyTap('⌫')">⌫</button></div>
     </div>
-  </div>
-
-  <!-- ==================== 文本记账页 ==================== -->
-  <div class="page" id="page-text-txn">
-    <div class="nav-header">
-      <button class="nav-icon" onclick="closeTextTxn()">取消</button>
-      <div class="nav-title">文本记账</div>
-      <button class="nav-icon" onclick="saveParsedTxns()" style="font-size:15px;font-weight:600;width:auto;padding:0 8px">保存</button>
-    </div>
-    <div style="padding:0 20px">
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">输入消费内容</div>
-      <textarea class="textarea-field" id="text-txn-input" placeholder="在这里输入你的消费...&#10;&#10;例如：&#10;今日买菜15元，水果20元，早餐5元" style="min-height:120px"></textarea>
-      <button class="btn-primary mt-12" onclick="doParseText()" style="height:40px;font-size:14px">🔮 解析文本</button>
-    </div>
-    <div class="hidden mt-16" id="text-txn-preview">
-      <div class="section-title">解析预览</div>
-      <div class="txn-list" id="parsed-txn-list"></div>
-      <div style="text-align:center;padding:12px;font-size:14px;color:var(--text-secondary)" id="parsed-count"></div>
-    </div>
+    <button class="txn-save-btn" onclick="saveTxn()">保存</button>
   </div>
 
   <!-- ==================== 交易详情页 ==================== -->
   <div class="page" id="page-txn-detail">
     <div class="nav-header">
-      <button class="nav-icon" onclick="closeTxnDetail()">‹</button>
+      <button class="nav-icon" onclick="closeTxnDetail()">←</button>
       <div class="nav-title">交易详情</div>
-      <button class="nav-icon" onclick="editTxnDetail()" style="font-size:14px;width:auto;padding:0 8px">编辑</button>
+      <button class="nav-icon" onclick="editTxnDetail()" style="font-size:14px">编辑</button>
     </div>
     <span id="detail-id" data-id="" hidden></span>
     <div class="detail-amount" id="detail-amount"></div>
@@ -293,13 +194,13 @@
   <!-- ==================== 搜索页 ==================== -->
   <div class="page" id="page-search">
     <div class="nav-header">
-      <button class="nav-icon" onclick="closeSearch()">‹</button>
+      <button class="nav-icon" onclick="closeSearch()">←</button>
       <div class="nav-title">搜索</div>
       <div style="width:36px"></div>
     </div>
     <div class="search-bar">
       <div class="search-input-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input id="search-input" placeholder="搜索关键词..." oninput="doSearch()">
       </div>
     </div>
@@ -308,10 +209,7 @@
       <button class="filter-chip" id="search-filter-type-expense" onclick="setSearchType('expense')">支出</button>
       <button class="filter-chip" id="search-filter-type-income" onclick="setSearchType('income')">收入</button>
     </div>
-    <div class="empty-state hidden" id="search-empty">
-      <div style="font-size:32px">🔍</div>
-      <div class="empty-state-text">没有找到相关记录</div>
-    </div>
+    <div class="empty-state hidden" id="search-empty"><div style="font-size:32px">🔍</div><div class="empty-state-text">没有找到相关记录</div></div>
     <div class="txn-list" id="search-txn-list"></div>
   </div>
 
@@ -319,72 +217,53 @@
   <div class="page" id="page-add-account">
     <div class="nav-header">
       <button class="nav-icon" onclick="closeAddAccount()">取消</button>
-      <div class="nav-title">添加账户</div>
-      <button class="nav-icon" onclick="saveAccount()" style="font-size:15px;font-weight:600;width:auto;padding:0 8px" id="acc-save-btn">保存</button>
+      <div class="nav-title" id="acc-form-title">添加账户</div>
+      <button class="nav-icon primary" onclick="saveAccount()" id="acc-save-btn">保存</button>
     </div>
     <div class="section-title">账户类型</div>
     <div class="type-grid" style="margin:0 20px" id="acc-type-grid"></div>
     <div class="card mt-16" style="padding:0">
-      <div class="form-row" style="cursor:text">
-        <span class="form-row-icon">📝</span>
-        <span class="form-row-label">名称</span>
-        <input class="form-row-value" id="acc-name-input" placeholder='如"建设银行"、"支付宝"' style="border:none;outline:none;background:none;font-size:15px">
-      </div>
+      <div class="form-row" style="cursor:text"><span class="form-row-icon">📝</span><span class="form-row-label">名称</span><input class="form-row-value" id="acc-name-input" placeholder='如"建设银行"' style="border:none;outline:none;background:none;font-size:15px"></div>
       <div style="height:.5px;background:var(--divider);margin-left:48px"></div>
-      <div class="form-row" style="cursor:text">
-        <span class="form-row-icon">💰</span>
-        <span class="form-row-label">余额</span>
-        <input class="form-row-value" id="acc-balance-input" type="number" step="0.01" placeholder="0.00" style="border:none;outline:none;background:none;font-size:15px">
-      </div>
-      <div id="acc-custom-type" style="display:none">
-        <div style="height:.5px;background:var(--divider);margin-left:48px"></div>
-        <div class="form-row" style="cursor:text">
-          <span class="form-row-icon">🏷️</span>
-          <span class="form-row-label">类目名</span>
-          <input class="form-row-value" id="acc-custom-type-input" placeholder='如"理财产品"' style="border:none;outline:none;background:none;font-size:15px">
-        </div>
-      </div>
+      <div class="form-row" style="cursor:text"><span class="form-row-icon">💰</span><span class="form-row-label">余额</span><input class="form-row-value" id="acc-balance-input" type="number" step="0.01" placeholder="0.00" style="border:none;outline:none;background:none;font-size:15px"></div>
+      <div id="acc-custom-type" style="display:none"><div style="height:.5px;background:var(--divider);margin-left:48px"></div>
+      <div class="form-row" style="cursor:text"><span class="form-row-icon">🏷️</span><span class="form-row-label">类目名</span><input class="form-row-value" id="acc-custom-type-input" placeholder='如"理财产品"' style="border:none;outline:none;background:none;font-size:15px"></div></div>
       <div style="height:.5px;background:var(--divider);margin-left:48px"></div>
-      <div class="form-row" style="cursor:text">
-        <span class="form-row-icon">✏️</span>
-        <span class="form-row-label">备注</span>
-        <input class="form-row-value" id="acc-note-input" placeholder="选填" style="border:none;outline:none;background:none;font-size:15px">
-      </div>
+      <div class="form-row" style="cursor:text"><span class="form-row-icon">✏️</span><span class="form-row-label">备注</span><input class="form-row-value" id="acc-note-input" placeholder="选填" style="border:none;outline:none;background:none;font-size:15px"></div>
     </div>
     <div style="padding:0 20px">
-      <button class="btn-primary mt-16" onclick="saveAccount()" id="acc-save-btn-2">添加账户</button>
+      <button class="btn-primary mt-16" onclick="saveAccount()">保存</button>
       <button id="acc-delete-btn" class="btn-danger mt-12" style="width:100%;padding:12px;display:none" onclick="deleteAccountFromForm()">删除此账户</button>
     </div>
   </div>
 
-  <!-- ==================== 分类管理页 ==================== -->
-  <div class="page" id="page-cat-management">
+  <!-- ==================== 类别设置页 ==================== -->
+  <div class="page" id="page-cat-mgmt">
     <div class="nav-header">
-      <button class="nav-icon" onclick="closeCatManagement()">‹</button>
-      <div class="nav-title">分类管理</div>
+      <button class="nav-icon" onclick="closeCatManagement()">←</button>
+      <div class="nav-title">类别设置</div>
       <div style="width:36px"></div>
     </div>
-    <div id="cat-management-body"></div>
+    <div class="segment mt-8" style="margin:0 60px" id="cat-mgmt-segment">
+      <button class="segment-btn expense active" data-type="expense" onclick="switchCatMgmtType('expense')">支出</button>
+      <button class="segment-btn income" data-type="income" onclick="switchCatMgmtType('income')">收入</button>
+    </div>
+    <div id="cat-mgmt-body" style="padding-top:12px"></div>
   </div>
 
-  <!-- ==================== 分类选择器弹窗 ==================== -->
-  <div class="category-picker hidden" id="overlay-cat-picker" onclick="if(event.target===this)closeCatPicker()">
-    <div class="category-picker-content">
+  <!-- ==================== 子类目选择弹窗 ==================== -->
+  <div class="subcat-picker hidden" id="overlay-subcat" onclick="if(event.target===this)closeSubcatPicker()">
+    <div class="subcat-picker-content">
       <div class="picker-header">
-        <button class="nav-icon" onclick="closeCatPicker()">取消</button>
-        <span class="picker-header-title">选择分类</span>
-        <div style="width:36px"></div>
+        <span class="picker-header-title">选择子类目</span>
+        <button class="nav-icon" onclick="closeSubcatPicker()">✕</button>
       </div>
-      <div class="picker-body">
-        <div class="picker-col-1" id="picker-col-1"></div>
-        <div class="picker-col-2" id="picker-col-2">
-          <div class="empty-state"><div class="empty-state-text">请选择一级分类</div></div>
-        </div>
-      </div>
+      <div id="subcat-list" style="padding:8px 0"></div>
+      <div style="padding:8px 0;font-size:13px;color:var(--text-secondary)">不选则默认为"自定义"</div>
     </div>
   </div>
 
-  <!-- ==================== 日期选择器弹窗 ==================== -->
+  <!-- ==================== 日期选择弹窗 ==================== -->
   <div class="modal-overlay hidden" id="overlay-date-picker" onclick="if(event.target===this)closeDatePicker()">
     <div class="modal">
       <div class="modal-title">选择日期</div>
@@ -393,18 +272,6 @@
         <button class="btn-outline" onclick="closeDatePicker()">取消</button>
         <button class="btn-primary" onclick="confirmDate()" style="flex:1">确定</button>
       </div>
-    </div>
-  </div>
-
-  <!-- ==================== 账户选择器弹窗 ==================== -->
-  <div class="category-picker hidden" id="overlay-account-picker" onclick="if(event.target===this)closeAccountPicker()">
-    <div class="category-picker-content">
-      <div class="picker-header">
-        <button class="nav-icon" onclick="closeAccountPicker()">取消</button>
-        <span class="picker-header-title">选择账户</span>
-        <div style="width:36px"></div>
-      </div>
-      <div id="account-picker-body" style="max-height:50vh;overflow-y:auto"></div>
     </div>
   </div>
 
@@ -433,11 +300,10 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
 
-</div><!-- /#app -->
+</div>
 
 <script src="js/db.js"></script>
 <script src="js/categories.js"></script>
-<script src="js/parser.js"></script>
 <script src="js/csv.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/app.js"></script>
