@@ -37,14 +37,39 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .nav-title { font-size: 20px; font-weight: 700; }
 .nav-icon { font-size: 15px; color: var(--primary); background: none; border: none; padding: 4px 8px; cursor: pointer; }
 
-/* ---- TabBar ---- */
-.tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 428px; height: calc(56px + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: #fff; border-top: 1px solid var(--divider); display: flex; z-index: 200; }
-.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; color: var(--text-secondary); }
+/* ---- TabBar: 5栏 ---- */
+.tab-bar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 428px; height: calc(60px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: #fff; border-top: 1px solid var(--divider);
+  display: flex; align-items: flex-start; justify-content: space-around;
+  z-index: 200;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; cursor: pointer; color: var(--text-secondary);
+  padding-top: 6px; width: 56px;
+  text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
 .tab-item.active { color: var(--primary); }
 .tab-item svg { width: 22px; height: 22px; }
-.tab-item span { font-size: 10px; font-weight: 500; }
+.tab-item span { font-size: 10px; font-weight: 500; white-space: nowrap; }
 
-/* ---- 底部抽屉 ---- */
+/* 中央记账按钮 */
+.tab-item.center-fab {
+  position: relative; top: -16px;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 12px rgba(46,125,50,.35);
+  padding-top: 0; border: none;
+}
+.tab-item.center-fab:active { transform: scale(.92); }
+.tab-item.center-fab svg { width: 26px; height: 26px; color: #fff; }
+.tab-item.center-fab span { display: none; }
+
+/* 底部抽屉 */
 .sheet-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; justify-content: center; }
 .sheet-overlay.hidden { display: none; }
 .sheet { width: 100%; max-width: 428px; max-height: 92vh; background: #fff; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; animation: sheetUp .25s ease-out; overflow: hidden; }
@@ -239,13 +264,5 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 
 .btn-sm { padding: 6px 14px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: 12px; cursor: pointer; }
 
-/* FAB 底部中央 */
-.fab {
-  position: fixed; bottom: calc(56px + var(--safe-bottom) + 10px); left: 50%; transform: translateX(-50%);
-  z-index: 150; width: 56px; height: 56px; border-radius: 50%;
-  background: var(--primary); color: #fff; cursor: pointer; border: none;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 16px rgba(46,125,50,.4); transition: .15s;
-}
-.fab:active { transform: translateX(-50%) scale(.92); }
-.fab svg { width: 28px; height: 28px; }
+.btn-sm:active { opacity: .85; }
+/* (FAB 已合并到 TabBar 中央按钮，不再需要独立 FAB) */

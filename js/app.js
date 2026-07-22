@@ -3,7 +3,7 @@
    ============================================ */
 
 const state = {
-  currentTab: 'home', currentMonth: new Date(),
+  currentTab: 'transactions', currentMonth: new Date(),
   // 记账 Sheet
   sheetType: 'expense', sheetCat1: '', sheetTag: '', sheetAmount: 0, sheetInput: '',
   sheetDate: '', editingTxnId: null,
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   await db.ready;
   state.sheetDate=today();
   updateMonthTitle();
-  switchTab('home');
+  switchTab('transactions');
   if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 });
 
@@ -45,15 +45,15 @@ document.addEventListener('DOMContentLoaded',async()=>{
 //  TabBar
 // ============================================================
 function switchTab(tab) {
+  if(tab==='add'){openSheet();return;}
   state.currentTab=tab;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
   const p=$(`page-${tab}`); if(p)p.classList.add('active');
   const tb=document.querySelector(`.tab-item[data-tab="${tab}"]`); if(tb)tb.classList.add('active');
-  if(tab==='home')renderHome();
+  if(tab==='transactions')renderHome();
   else if(tab==='stats')renderStats();
   else if(tab==='assets')renderAssets();
-  $('fab-add').style.display=(tab==='home')?'flex':'none';
 }
 
 // ============================================================
@@ -162,7 +162,7 @@ async function sheetComplete() {
   else await db.addTransaction(txn);
   showToast('保存成功 ✅');
   closeSheet();
-  switchTab('home');
+  switchTab('transactions');
 }
 
 // ============================================================
@@ -323,9 +323,9 @@ async function showTxnDetail(id){
   $('detail-note-row2').style.display=t.note?'':'none';
   $('detail-id').dataset.id=id;
   $('page-txn-detail').classList.add('active');
-  document.querySelector('.tab-bar').style.display='none';$('fab-add').style.display='none';
+  document.querySelector('.tab-bar').style.display='none';
 }
-function closeTxnDetail(){$('page-txn-detail').classList.remove('active');document.querySelector('.tab-bar').style.display='flex';$('fab-add').style.display='flex';switchTab('home');}
+function closeTxnDetail(){$('page-txn-detail').classList.remove('active');document.querySelector('.tab-bar').style.display='flex';switchTab('transactions');}
 async function deleteTxnDetail(){
   const id=$('detail-id').dataset.id;if(!id||!confirm('确认删除？'))return;
   await db.deleteTransaction(id);showToast('已删除');closeTxnDetail();
@@ -400,8 +400,8 @@ async function deleteAccountFromForm(){if(!state.editingAccountId||!confirm('确
 // ============================================================
 //  搜索 / CSV / 类别设置
 // ============================================================
-function showSearch(){$('page-search').classList.add('active');document.querySelector('.tab-bar').style.display='none';$('fab-add').style.display='none';doSearch();}
-function closeSearch(){$('page-search').classList.remove('active');document.querySelector('.tab-bar').style.display='flex';$('fab-add').style.display='flex';switchTab(state.currentTab);}
+function showSearch(){$('page-search').classList.add('active');document.querySelector('.tab-bar').style.display='none';doSearch();}
+function closeSearch(){$('page-search').classList.remove('active');document.querySelector('.tab-bar').style.display='flex';switchTab(state.currentTab);}
 function setSearchType(t){state.searchType=t;$('sf-all').classList.toggle('active',!t);$('sf-exp').classList.toggle('active',t==='expense');$('sf-inc').classList.toggle('active',t==='income');doSearch();}
 async function doSearch(){
   const text=$('search-input').value.trim();
@@ -412,7 +412,7 @@ async function doSearch(){
 
 function triggerCSVImport(){
   const i=document.createElement('input');i.type='file';i.accept='.csv';
-  i.onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=await f.text();const r=await csvHandler.importCSV(t);alert(`导入完成\n成功: ${r.imported} 条\n跳过: ${r.skipped} 条`);if(r.imported>0)switchTab('home');};
+  i.onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=await f.text();const r=await csvHandler.importCSV(t);alert(`导入完成\n成功: ${r.imported} 条\n跳过: ${r.skipped} 条`);if(r.imported>0)switchTab('transactions');};
   i.click();
 }
 async function triggerCSVExport(){const c=await csvHandler.exportAll();csvHandler.downloadCSV(c,`波妞记账_${today()}.csv`);showToast('导出成功');}

@@ -19,8 +19,8 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <!-- ==================== 首页 ==================== -->
-  <div class="page active" id="page-home">
+  <!-- ==================== 明细 ==================== -->
+  <div class="page active" id="page-transactions">
     <div class="nav-header">
       <div class="nav-title">🌸 波妞记账</div>
       <button class="nav-icon" onclick="showSearch()">
@@ -79,6 +79,26 @@
     </div>
     <div class="section-title mt-12">账户列表</div>
     <div id="asset-sections"></div>
+  </div>
+
+  <!-- ==================== 发现 ==================== -->
+  <div class="page" id="page-discover">
+    <div class="nav-header"><div class="nav-title">发现</div><div style="width:36px"></div></div>
+    <div style="padding:32px 20px">
+      <div class="settings-list">
+        <div class="settings-item" onclick="switchTab('transactions')"><span class="settings-item-icon">📋</span><span class="settings-item-label">本月明细</span><span style="font-size:12px;color:var(--text-secondary)">查看全部交易记录 ›</span></div>
+        <div class="settings-divider"></div>
+        <div class="settings-item" onclick="switchTab('stats')"><span class="settings-item-icon">📊</span><span class="settings-item-label">统计分析</span><span style="font-size:12px;color:var(--text-secondary)">查看图表报表 ›</span></div>
+        <div class="settings-divider"></div>
+        <div class="settings-item" onclick="switchTab('assets')"><span class="settings-item-icon">💰</span><span class="settings-item-label">资产管理</span><span style="font-size:12px;color:var(--text-secondary)">查看所有账户 ›</span></div>
+      </div>
+      <div class="section-title mt-16">小贴士</div>
+      <div class="settings-list">
+        <div class="settings-item" style="cursor:default"><span class="settings-item-icon">💡</span><span class="settings-item-label">坚持记账，掌握每一笔收支</span></div>
+        <div class="settings-divider"></div>
+        <div class="settings-item" style="cursor:default"><span class="settings-item-icon">🎯</span><span class="settings-item-label">每日记账，让消费更有规划</span></div>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== 我的 ==================== -->
@@ -205,24 +225,26 @@
 
   <!-- ==================== 底部 TabBar ==================== -->
   <div class="tab-bar">
-    <div class="tab-item active" data-tab="home" onclick="switchTab('home')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>首页</span>
+    <div class="tab-item active" data-tab="transactions" onclick="switchTab('transactions')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>明细</span>
     </div>
     <div class="tab-item" data-tab="stats" onclick="switchTab('stats')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>图表</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>图表</span>
     </div>
-    <div class="tab-item" data-tab="assets" onclick="switchTab('assets')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span>资产</span>
+    <div class="tab-item center-fab" data-tab="add" onclick="openSheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    <div class="tab-item" data-tab="discover" onclick="switchTab('discover')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      <span>发现</span>
     </div>
     <div class="tab-item" data-tab="profile" onclick="switchTab('profile')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>我的</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>我的</span>
     </div>
   </div>
-
-  <!-- ==================== 悬浮 FAB（底部中央） ==================== -->
-  <button class="fab" id="fab-add" onclick="openSheet()">
-    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>
 
 </div>
 
