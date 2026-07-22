@@ -39,7 +39,7 @@
       </div>
       <!-- 第三行：快捷入口 -->
       <div class="home-quick-actions">
-        <div class="home-quick-card" onclick="switchTab('transactions')"><span class="icon">📋</span>账单</div>
+        <div class="home-quick-card" onclick="openBill()"><span class="icon">📋</span>账单</div>
         <div class="home-quick-card" onclick="switchTab('stats')"><span class="icon">📊</span>预算</div>
         <div class="home-quick-card" onclick="switchTab('assets')"><span class="icon">💰</span>资产管家</div>
       </div>
@@ -80,6 +80,33 @@
     <!-- 选中日期账单列表 -->
     <div class="section-title mt-12" id="cal-selected-title"></div>
     <div id="cal-txn-list" style="padding:0 16px"></div>
+  </div>
+
+  <!-- ==================== 账单汇总页 ==================== -->
+  <div class="page" id="page-bill">
+    <div class="nav-header">
+      <button style="font-size:16px;font-weight:600;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:2px" onclick="openYearPicker()"><span id="bill-year-label">2026年</span><span style="font-size:10px">▼</span></button>
+      <div class="nav-title"></div>
+      <button class="nav-icon" onclick="closeBill()">✕</button>
+    </div>
+    <!-- 月/年 Tab -->
+    <div class="sheet-segment" style="padding:0 60px 8px" id="bill-tabs">
+      <button class="expense active" data-tab="monthly" onclick="switchBillTab('monthly')">月账单</button>
+      <button class="income" data-tab="yearly" onclick="switchBillTab('yearly')">年账单</button>
+    </div>
+    <!-- 内容区 -->
+    <div style="overflow-y:auto;flex:1" id="bill-content"></div>
+  </div>
+
+  <!-- 年份选择器弹窗 -->
+  <div class="sheet-overlay hidden" id="overlay-year-picker" onclick="if(event.target===this)closeYearPicker()">
+    <div class="sheet" style="max-height:50vh">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--divider)">
+        <span style="font-weight:600">选择年份</span>
+        <button style="color:var(--primary);background:none;border:none;font-size:15px;cursor:pointer" onclick="closeYearPicker()">完成</button>
+      </div>
+      <div class="year-picker" id="year-picker-list"></div>
+    </div>
   </div>
 
   <!-- ==================== 图表页 ==================== -->

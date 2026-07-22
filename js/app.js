@@ -19,6 +19,8 @@ const state = {
   // 日历
   calYear: new Date().getFullYear(), calMonth: new Date().getMonth()+1,
   calSelected: new Date().toISOString().split('T')[0],
+  // 账单汇总
+  billYear: new Date().getFullYear(), billTab: 'monthly',
 };
 
 // ---- 工具 ----
@@ -512,6 +514,82 @@ async function saveAccount(){
 async function deleteAccountFromForm(){if(!state.editingAccountId||!confirm('确认删除？'))return;await db.deleteAccount(state.editingAccountId);showToast('已删除');closeAddAccount();}
 
 // ============================================================
+// ============================================================
+//  账单汇总页
+// ============================================================
+function openBill(){
+  state.billYear=new Date().getFullYear(); state.billTab='monthly';
+  document.querySelectorAll('#bill-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='monthly'));
+  $('page-bill').classList.add('active');
+  document.querySelector('.tab-bar').style.display='none';
+  renderBill();
+}
+function closeBill(){
+  $('page-bill').classList.remove('active');
+  document.querySelector('.tab-bar').style.display='flex';
+}
+function switchBillTab(tab){
+  state.billTab=tab;
+  document.querySelectorAll('#bill-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  renderBill();
+}
+function openYearPicker(){
+  const cy=new Date().getFullYear();
+  let h='';
+  for(let y=cy-4;y<=cy+3;y++){
+    h+=`<div class="year-picker-item${y===state.billYear?' selected':''}" onclick="pickBillYear(${y})">${y}年</div>`;
+  }
+  $('year-picker-list').innerHTML=h;
+  $('overlay-year-picker').classList.remove('hidden');
+}
+function closeYearPicker(){$('overlay-year-picker').classList.add('hidden');}
+function pickBillYear(y){state.billYear=y;closeYearPicker();renderBill();}
+
+async function renderBill(){
+  $('bill-year-label').textContent=state.billYear+'年';
+  if(state.billTab==='monthly') await renderMonthlyBill();
+  else await renderYearlyBill();
+}
+
+async function renderMonthlyBill(){
+  let yInc=0,yExp=0,rows='';
+  for(let m=1;m<=12;m++){
+    const ms=`${state.billYear}-${String(m).padStart(2,'0')}-01`;
+    const me=`${state.billYear}-${String(m).padStart(2,'0')}-${new Date(state.billYear,m,0).getDate()}`;
+    const[inc,exp]=await Promise.all([db.getSum('income',ms,me),db.getSum('expense',ms,me)]);
+    yInc+=inc; yExp+=exp;
+    const bal=inc-exp;
+    rows+=`<div class="bill-table-row"><span>${m}月</span><span class="col-inc">${inc>0?'¥'+fmt(inc):'¥0.00'}</span><span class="col-exp">${exp>0?'¥'+fmt(exp):'¥0.00'}</span><span class="col-bal" style="color:${bal>=0?'var(--income)':'var(--expense)'}">${bal>=0?'+':''}¥${fmt(bal)}</span></div>`;
+  }
+  const bal=yInc-yExp;
+  $('bill-content').innerHTML=`
+    <div class="bill-summary-card"><div class="total-label">年结余</div><div class="total-amount" style="color:${bal>=0?'var(--income)':'var(--expense)'}">¥${fmt(bal)}</div><div class="sub-row"><span class="inc">年收入 ¥${fmt(yInc)}</span><span class="exp">年支出 ¥${fmt(yExp)}</span></div></div>
+    <div class="bill-table"><div class="bill-table-header"><span>月份</span><span>月收入</span><span>月支出</span><span>月结余</span></div>${rows}</div>`;
+}
+
+async function renderYearlyBill(){
+  const allTxns=await db.getTransactions({limit:5000});
+  const map={};
+  allTxns.forEach(t=>{
+    const y=t.date.split('-')[0];
+    if(!map[y]) map[y]={inc:0,exp:0};
+    if(t.type==='income') map[y].inc+=t.amount;
+    else map[y].exp+=t.amount;
+  });
+  const years=Object.keys(map).sort((a,b)=>b.localeCompare(a));
+  let tInc=0,tExp=0,rows='';
+  years.forEach(y=>{
+    const{inc,exp}=map[y]; tInc+=inc; tExp+=exp;
+    const bal=inc-exp;
+    rows+=`<div class="bill-table-row"><span>${y}年</span><span class="col-inc">${inc>0?'¥'+fmt(inc):'¥0.00'}</span><span class="col-exp">${exp>0?'¥'+fmt(exp):'¥0.00'}</span><span class="col-bal" style="color:${bal>=0?'var(--income)':'var(--expense)'}">${bal>=0?'+':''}¥${fmt(bal)}</span></div>`;
+  });
+  const bal=tInc-tExp;
+  $('bill-content').innerHTML=`
+    <div class="bill-summary-card"><div class="total-label">总结余</div><div class="total-amount" style="color:${bal>=0?'var(--income)':'var(--expense)'}">¥${fmt(bal)}</div><div class="sub-row"><span class="inc">总收入 ¥${fmt(tInc)}</span><span class="exp">总支出 ¥${fmt(tExp)}</span></div></div>
+    <div class="bill-table"><div class="bill-table-header"><span>年份</span><span>年收入</span><span>年支出</span><span>年结余</span></div>${rows}</div>
+    <div class="bill-table-tip">年账单为自然年（1.1-12.31）</div>`;
+}
+
 // ============================================================
 //  日历页面
 // ============================================================

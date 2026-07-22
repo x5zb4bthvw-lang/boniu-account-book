@@ -282,6 +282,28 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .cal-cell.selected.today { color: #fff; }
 .cal-dot { width: 4px; height: 4px; border-radius: 50%; background: #bbb; margin-top: 1px; }
 
+/* ============ 账单汇总页 ============ */
+.bill-summary-card { margin: 12px 16px; padding: 20px; background: #fff; border-radius: var(--radius); text-align: center; }
+.bill-summary-card .total-label { font-size: 13px; color: var(--text-secondary); }
+.bill-summary-card .total-amount { font-size: 30px; font-weight: 800; color: var(--text); margin: 4px 0 10px; }
+.bill-summary-card .sub-row { display: flex; justify-content: space-around; font-size: 13px; }
+.bill-summary-card .sub-row .inc { color: var(--income); font-weight: 600; }
+.bill-summary-card .sub-row .exp { color: var(--expense); font-weight: 600; }
+
+.bill-table { margin: 0 16px; background: #fff; border-radius: var(--radius); overflow: hidden; }
+.bill-table-header { display: grid; grid-template-columns: 1fr 1.2fr 1.2fr 1.2fr; padding: 10px 14px; background: var(--bg); font-size: 12px; color: var(--text-secondary); font-weight: 500; text-align: center; border-bottom: 1px solid var(--divider); }
+.bill-table-row { display: grid; grid-template-columns: 1fr 1.2fr 1.2fr 1.2fr; padding: 11px 14px; font-size: 14px; text-align: center; border-bottom: .5px solid var(--divider); }
+.bill-table-row .col-inc { color: var(--income); }
+.bill-table-row .col-exp { color: var(--expense); }
+.bill-table-row .col-bal { font-weight: 500; }
+.bill-table-tip { text-align: center; font-size: 11px; color: var(--text-secondary); padding: 12px; }
+
+/* 年份选择器 */
+.year-picker { overflow-y: auto; max-height: 40vh; }
+.year-picker-item { padding: 14px 20px; text-align: center; font-size: 16px; cursor: pointer; border-bottom: .5px solid var(--divider); }
+.year-picker-item:active { background: var(--bg); }
+.year-picker-item.selected { color: var(--primary); font-weight: 600; }
+
 /* 标签 Chip（第二步内联） */
 .tag-chip-inline { padding: 6px 14px; border-radius: 16px; font-size: 13px; cursor: pointer; border: 1px solid var(--divider); background: #fff; color: var(--text); white-space: nowrap; transition: .15s; flex-shrink: 0; }
 .tag-chip-inline:active { background: var(--primary); color: #fff; border-color: var(--primary); }
