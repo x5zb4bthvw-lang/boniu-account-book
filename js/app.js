@@ -523,52 +523,63 @@ async function deleteAccountFromForm(){if(!state.editingAccountId||!confirm('确
 //  编辑备注/标签（点击左侧）
 // ============================================================
 function hideAllPages(){ document.querySelectorAll('.page.active').forEach(p=>p.classList.remove('active')); }
+
+// ---- 备注/标签编辑（标签=蓝色徽章，备注=黑色文字，🏷️选标签）----
 async function openEditNote(id){
   const t=await db.getTransaction(id); if(!t) return;
   hideAllPages();
   state.editNoteId=id;
   const icon=catManager.getIcon(t.category1);
   $('edit-note-title').textContent=icon+' '+t.category1;
+  // 设置当前标签和备注
+  state._editTag=t.tag||null;
   $('edit-note-input').value=t.note||'';
-  // 标签
-  const tags=await catManager.getAllCat2List(t.category1, t.type);
-  const selTag=t.tag||'';
-  $('edit-note-tags').innerHTML=tags.map(tag=>`<span class="tag-chip-inline" style="${tag===selTag?'background:var(--primary);color:#fff;border-color:var(--primary)':''}" onclick="pickEditTag('${tag}')">#${tag}</span>`).join('')||'<span style="font-size:12px;color:var(--text-secondary)">暂无标签</span>';
+  updateTagBadge();
   $('page-edit-note').classList.add('active');
   document.querySelector('.tab-bar').style.display='none';
+}
+function updateTagBadge(){
+  const badge=$('edit-note-tag-badge');
+  if(state._editTag){
+    badge.textContent='#'+state._editTag;
+    badge.style.display='inline-block';
+  } else {
+    badge.textContent='';
+    badge.style.display='none';
+  }
 }
 function closeEditNote(){
   hideAllPages(); $('page-transactions').classList.add('active');
   document.querySelector('.tab-bar').style.display='flex';
 }
-function pickEditTag(tag){
-  const cur=$('edit-note-input').value;
-  // 替换或追加标签
-  const hashIdx=cur.indexOf('#');
-  if(hashIdx>=0){
-    const afterHash=cur.slice(hashIdx+1).split(' ')[0];
-    $('edit-note-input').value=cur.replace('#'+afterHash,'#'+tag);
-  } else {
-    $('edit-note-input').value='#'+tag+(cur?' '+cur:'');
-  }
-  // 高亮选中的标签 chip
-  document.querySelectorAll('#edit-note-tags .tag-chip-inline').forEach(c=>{
-    c.style.background=c.textContent==='#'+tag?'var(--primary)':'#fff';
-    c.style.color=c.textContent==='#'+tag?'#fff':'var(--text)';
-    c.style.borderColor=c.textContent==='#'+tag?'var(--primary)':'var(--divider)';
+
+// 标签选择器
+async function openTagPicker(){
+  const t=await db.getTransaction(state.editNoteId);
+  if(!t) return;
+  const tags=await catManager.getAllCat2List(t.category1, t.type);
+  let html=`<button style="width:100%;padding:12px;text-align:center;border:1px solid var(--divider);border-radius:10px;background:#fff;font-size:14px;cursor:pointer;margin-bottom:8px" onclick="pickEditTag(null)">清除标签 ✕</button>`;
+  tags.forEach(tag=>{
+    const sel=state._editTag===tag;
+    html+=`<button style="padding:10px 16px;margin:4px;border-radius:20px;font-size:14px;cursor:pointer;border:1px solid ${sel?'var(--primary)':'var(--divider)'};background:${sel?'var(--primary)':'#fff'};color:${sel?'#fff':'var(--text)'}" onclick="pickEditTag('${tag}')">#${tag}</button>`;
   });
+  if(!tags.length) html+='<div style="font-size:13px;color:var(--text-secondary);padding:8px">暂无标签，可在"我的→类别设置"中添加</div>';
+  $('tag-picker-list').innerHTML=html;
+  $('overlay-tag-picker').classList.remove('hidden');
+}
+function closeTagPicker(){$('overlay-tag-picker').classList.add('hidden');}
+function pickEditTag(tag){
+  state._editTag=tag||null;
+  updateTagBadge();
+  closeTagPicker();
 }
 async function saveEditNote(){
   const id=state.editNoteId; if(!id) return;
   const t=await db.getTransaction(id); if(!t) return;
-  const noteRaw=$('edit-note-input').value.trim();
-  let tag=t.tag||null, note=noteRaw||null;
-  if(noteRaw&&noteRaw.startsWith('#')){
-    const si=noteRaw.indexOf(' ');
-    if(si>1){ tag=noteRaw.slice(1,si); note=noteRaw.slice(si+1).trim()||null; }
-    else { tag=noteRaw.slice(1)||null; note=null; }
-  } else { tag=null; }
-  t.tag=tag||null; t.category2=tag||'无标签'; t.note=note||null;
+  const note=$('edit-note-input').value.trim();
+  t.tag=state._editTag||null;
+  t.category2=state._editTag||'无标签';
+  t.note=note||null;
   await db.updateTransaction(t);
   showToast('修改成功');
   closeEditNote(); renderHome();

@@ -68,12 +68,24 @@
       <button class="nav-icon" style="color:var(--primary);font-weight:600" onclick="saveEditNote()">完成</button>
     </div>
     <span id="edit-note-id" hidden></span>
-    <div style="padding:16px 20px">
-      <input id="edit-note-input" class="input-field" placeholder="请输入备注" style="text-align:center;font-size:16px">
+    <!-- 标签徽章 + 备注输入 + 标签图标 -->
+    <div style="margin:16px 20px">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--divider);border-radius:12px;background:#fff;min-height:48px;flex-wrap:wrap">
+        <span id="edit-note-tag-badge" style="display:none;padding:4px 10px;border-radius:12px;background:var(--primary);color:#fff;font-size:14px;font-weight:500;white-space:nowrap;flex-shrink:0"></span>
+        <input id="edit-note-input" style="flex:1;min-width:80px;border:none;outline:none;font-size:15px;color:var(--text);background:none" placeholder="点击输入备注">
+        <button id="edit-note-tag-icon" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;border:none;background:var(--divider);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="openTagPicker()">🏷️</button>
+      </div>
     </div>
-    <div style="padding:0 20px">
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">🏷️ 选择标签</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap" id="edit-note-tags"></div>
+  </div>
+
+  <!-- 标签选择器弹窗 -->
+  <div class="sheet-overlay hidden" id="overlay-tag-picker" onclick="if(event.target===this)closeTagPicker()">
+    <div class="sheet" style="max-height:55vh">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--divider)">
+        <span style="font-weight:600">选择标签</span>
+        <button style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-secondary)" onclick="closeTagPicker()">✕</button>
+      </div>
+      <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;max-height:40vh;overflow-y:auto" id="tag-picker-list"></div>
     </div>
   </div>
 
