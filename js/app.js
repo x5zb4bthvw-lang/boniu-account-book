@@ -266,16 +266,18 @@ function groupByDay(txns) {
 function txnRowHTML(t) {
   const inc=t.type==='income', icon=catManager.getIcon(t.category1);
   const tag=t.tag||'';
-  const noteOnly=t.note||'';
+  // 第一行：备注 > 一级科目名
+  const line1=t.note||t.category1;
+  // 第二行：仅标签（无标签则空）
+  const line2=tag?`#${tag}`:'';
   return`<div class="swipe-row" data-id="${t.id}">
     <div class="swipe-delete" onclick="swipeDeleteTxn('${t.id}')">删除</div>
     <div class="swipe-content txn-row" ontouchstart="swipeStart(event)" ontouchmove="swipeMove(event)" ontouchend="swipeEnd(event)">
       <div class="txn-left" onclick="openEditNote('${t.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer">
         <div class="txn-icon-wrap">${icon}</div>
         <div class="txn-info">
-          <span class="txn-cat">${esc(t.category1)}</span>
-          ${tag?`<span class="txn-tag">#${esc(tag)}</span>`:''}
-          ${noteOnly?`<span class="txn-note" style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px">${esc(noteOnly)}</span>`:''}
+          <span class="txn-cat">${esc(line1)}</span>
+          ${line2?`<span class="txn-note" style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px">${esc(line2)}</span>`:''}
         </div>
       </div>
       <div class="txn-amount ${inc?'income':''}" onclick="openEditAmount('${t.id}')" style="cursor:pointer;flex-shrink:0">${inc?'+':'-'}¥${fmt(t.amount)}</div>
@@ -437,7 +439,8 @@ async function showTxnDetail(id){
   const inc=t.type==='income',pf=inc?'+':'-',cls=inc?'income':'expense';
   $('detail-amount').textContent=`${pf}¥${fmt(t.amount)}`;
   $('detail-amount').className=`detail-amount ${cls}`;
-  $('detail-cat').textContent=`${t.category1}${t.tag?' > #'+t.tag:''}`;
+  const detailLabel=t.note||t.category1;
+  $('detail-cat').textContent=detailLabel+(t.tag?'  #'+t.tag:'');
   $('detail-date').textContent=fmtCN(t.date);
   $('detail-note').textContent=t.note||'';
   $('detail-note-row').style.display=t.note?'':'none';
@@ -734,7 +737,7 @@ async function renderMonthlyBill(){
     const[inc,exp]=await Promise.all([db.getSum('income',ms,me),db.getSum('expense',ms,me)]);
     yInc+=inc; yExp+=exp;
     const bal=inc-exp;
-    rows+=`<div class="bill-table-row"><span>${m}月</span><span class="col-inc">${inc>0?'¥'+fmt(inc):'¥0.00'}</span><span class="col-exp">${exp>0?'¥'+fmt(exp):'¥0.00'}</span><span class="col-bal" style="color:${bal>=0?'var(--income)':'var(--expense)'}">${bal>=0?'+':''}¥${fmt(bal)}</span></div>`;
+    rows+=`<div class="swipe-row"><div class="swipe-delete" onclick="clearMonthData(${m})">清空</div><div class="swipe-content bill-table-row" ontouchstart="swipeStart(event)" ontouchmove="swipeMove(event)" ontouchend="swipeEnd(event)"><span>${m}月</span><span class="col-inc">${inc>0?'¥'+fmt(inc):'¥0.00'}</span><span class="col-exp">${exp>0?'¥'+fmt(exp):'¥0.00'}</span><span class="col-bal" style="color:${bal>=0?'var(--income)':'var(--expense)'}">${bal>=0?'+':''}¥${fmt(bal)}</span></div></div>`;
   }
   const bal=yInc-yExp;
   $('bill-content').innerHTML=`
@@ -756,13 +759,31 @@ async function renderYearlyBill(){
   years.forEach(y=>{
     const{inc,exp}=map[y]; tInc+=inc; tExp+=exp;
     const bal=inc-exp;
-    rows+=`<div class="bill-table-row"><span>${y}年</span><span class="col-inc">${inc>0?'¥'+fmt(inc):'¥0.00'}</span><span class="col-exp">${exp>0?'¥'+fmt(exp):'¥0.00'}</span><span class="col-bal" style="color:${bal>=0?'var(--income)':'var(--expense)'}">${bal>=0?'+':''}¥${fmt(bal)}</span></div>`;
+    rows+=`<div class="swipe-row"><div class="swipe-delete" onclick="clearYearData(${y})">清空</div><div class="swipe-content bill-table-row" ontouchstart="swipeStart(event)" ontouchmove="swipeMove(event)" ontouchend="swipeEnd(event)"><span>${y}年</span><span class="col-inc">${inc>0?'¥'+fmt(inc):'¥0.00'}</span><span class="col-exp">${exp>0?'¥'+fmt(exp):'¥0.00'}</span><span class="col-bal" style="color:${bal>=0?'var(--income)':'var(--expense)'}">${bal>=0?'+':''}¥${fmt(bal)}</span></div></div>`;
   });
   const bal=tInc-tExp;
   $('bill-content').innerHTML=`
     <div class="bill-summary-card"><div class="total-label">总结余</div><div class="total-amount" style="color:${bal>=0?'var(--income)':'var(--expense)'}">¥${fmt(bal)}</div><div class="sub-row"><span class="inc">总收入 ¥${fmt(tInc)}</span><span class="exp">总支出 ¥${fmt(tExp)}</span></div></div>
     <div class="bill-table"><div class="bill-table-header"><span>年份</span><span>年收入</span><span>年支出</span><span>年结余</span></div>${rows}</div>
     <div class="bill-table-tip">年账单为自然年（1.1-12.31）</div>`;
+}
+
+// 清空某月数据
+async function clearMonthData(month){
+  const ms=`${state.billYear}-${String(month).padStart(2,'0')}-01`;
+  const me=`${state.billYear}-${String(month).padStart(2,'0')}-${new Date(state.billYear,month,0).getDate()}`;
+  const txns=await db.getTransactions({startDate:ms,endDate:me,limit:5000});
+  for(const t of txns) await db.deleteTransaction(t.id);
+  showToast(`已清空${month}月数据`);
+  renderBill();
+}
+// 清空某年数据
+async function clearYearData(year){
+  const start=`${year}-01-01`, end=`${year}-12-31`;
+  const txns=await db.getTransactions({startDate:start,endDate:end,limit:10000});
+  for(const t of txns) await db.deleteTransaction(t.id);
+  showToast(`已清空${year}年数据`);
+  renderBill();
 }
 
 // ============================================================
