@@ -35,27 +35,22 @@
       <button class="month-picker-arrow" id="home-next-arrow" onclick="homeNextMonth()">›</button>
     </div>
 
-    <div class="networth-card">
-      <div class="networth-label">本月净资产</div>
-      <div class="networth-amount" id="home-networth">¥ 0.00</div>
-      <div class="networth-row">
-        <div class="networth-item"><div class="networth-item-label">资产</div><div class="networth-item-value" id="home-assets">¥ 0.00</div></div>
-        <div class="networth-item"><div class="networth-item-label">负债</div><div class="networth-item-value" id="home-liabilities">¥ 0.00</div></div>
-      </div>
+    <!-- 月度汇总条 -->
+    <div class="home-month-bar">
+      <span class="label">收入</span><span class="value" style="color:var(--income-green)" id="home-income">¥0</span>
+      <span class="label" style="margin-left:12px">支出</span><span class="value" style="color:var(--expense-red)" id="home-expense">¥0</span>
+      <span style="flex:1"></span>
+      <span class="label">结余</span><span class="value" id="home-balance">¥0</span>
     </div>
 
-    <div class="dual-cards mt-12">
-      <div class="dual-card"><div class="dual-card-label">📈 本月收入</div><div class="dual-card-amount income" id="home-income">¥ 0.00</div></div>
-      <div class="dual-card"><div class="dual-card-label">📉 本月支出</div><div class="dual-card-amount expense" id="home-expense">¥ 0.00</div></div>
-    </div>
+    <!-- 按天分组交易列表 -->
+    <div id="home-day-groups"></div>
 
-    <div class="section-title">最近交易</div>
     <div class="empty-state hidden" id="home-empty">
-      <div style="font-size:32px">📝</div>
-      <div class="empty-state-text">还没有记录</div>
+      <div style="font-size:40px">📝</div>
+      <div class="empty-state-text">本月还没有记录</div>
       <div class="empty-state-text" style="font-size:12px;margin-top:4px">点击右下角 + 开始记账吧</div>
     </div>
-    <div class="txn-list" id="home-txn-list"></div>
   </div>
 
   <!-- ==================== 统计页 ==================== -->
@@ -159,7 +154,21 @@
       <div style="width:44px"></div>
     </div>
     <div class="txn-step2-amount" id="step2-amount">¥ 0</div>
-    <div class="txn-meta-row" id="step2-meta"></div>
+
+    <!-- 标签区（二级类目/备注） -->
+    <div class="tag-area" id="step2-tags"></div>
+    <div class="tag-input-row hidden" id="step2-tag-input-row">
+      <input id="step2-tag-input" placeholder="输入新标签...">
+      <button class="btn-ok" onclick="confirmCustomTag()">确定</button>
+    </div>
+
+    <!-- 日期 & 备注行 -->
+    <div class="step2-info">
+      <span onclick="showDatePicker()" id="step2-date-label">📅 今天</span>
+      <span onclick="editNote()" id="step2-note-label">📝 添加备注</span>
+    </div>
+
+    <!-- 数字键盘 -->
     <div class="num-pad">
       <div class="num-row"><button class="num-key" onclick="numKeyTap('1')">1</button><button class="num-key" onclick="numKeyTap('2')">2</button><button class="num-key" onclick="numKeyTap('3')">3</button></div>
       <div class="num-row"><button class="num-key" onclick="numKeyTap('4')">4</button><button class="num-key" onclick="numKeyTap('5')">5</button><button class="num-key" onclick="numKeyTap('6')">6</button></div>
@@ -249,18 +258,6 @@
       <button class="segment-btn income" data-type="income" onclick="switchCatMgmtType('income')">收入</button>
     </div>
     <div id="cat-mgmt-body" style="padding-top:12px"></div>
-  </div>
-
-  <!-- ==================== 子类目选择弹窗 ==================== -->
-  <div class="subcat-picker hidden" id="overlay-subcat" onclick="if(event.target===this)closeSubcatPicker()">
-    <div class="subcat-picker-content">
-      <div class="picker-header">
-        <span class="picker-header-title">选择子类目</span>
-        <button class="nav-icon" onclick="closeSubcatPicker()">✕</button>
-      </div>
-      <div id="subcat-list" style="padding:8px 0"></div>
-      <div style="padding:8px 0;font-size:13px;color:var(--text-secondary)">不选则默认为"自定义"</div>
-    </div>
   </div>
 
   <!-- ==================== 日期选择弹窗 ==================== -->
