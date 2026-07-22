@@ -374,6 +374,11 @@
       <button class="income" data-type="income" onclick="switchCatMgmtType('income')">收入</button>
     </div>
     <div id="cat-mgmt-body" style="padding-top:12px"></div>
+    <div class="section-title mt-16">批量导入标签</div>
+    <div style="padding:0 16px">
+      <textarea id="batch-tags-input" class="textarea-field" style="min-height:120px;font-size:13px" placeholder="模板格式（每行一个一级类目）：&#10;餐饮: 早餐, 午餐, 晚餐, 外卖, 饮品&#10;交通: 地铁, 公交, 打车, 加油&#10;购物: 日用品, 服饰, 数码&#10;..."></textarea>
+      <button class="btn-primary mt-8" onclick="batchImportTags()" style="height:40px;font-size:14px">📥 批量导入标签</button>
+    </div>
   </div>
 
   <!-- ==================== 日期弹窗 ==================== -->

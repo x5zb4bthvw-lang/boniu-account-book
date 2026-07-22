@@ -531,9 +531,22 @@ async function openEditNote(id){
   state.editNoteId=id;
   const icon=catManager.getIcon(t.category1);
   $('edit-note-title').textContent=icon+' '+t.category1;
-  // 设置当前标签和备注
-  state._editTag=t.tag||null;
-  $('edit-note-input').value=t.note||'';
+  // 从多个来源提取标签和备注
+  let tag=t.tag||null, note=t.note||null;
+  if(!tag){
+    // 兜底1：从note解析 #标签
+    if(note&&note.startsWith('#')){
+      const si=note.indexOf(' ');
+      if(si>1){ tag=note.slice(1,si); note=note.slice(si+1).trim()||null; }
+      else { tag=note.slice(1)||null; note=null; }
+    }
+    // 兜底2：从category2提取（排除默认值）
+    if(!tag&&t.category2&&t.category2!=='自定义'&&t.category2!=='无标签'){
+      tag=t.category2;
+    }
+  }
+  state._editTag=tag;
+  $('edit-note-input').value=note||'';
   updateTagBadge();
   $('page-edit-note').classList.add('active');
   document.querySelector('.tab-bar').style.display='none';
@@ -878,6 +891,63 @@ async function renderCatMgmt(){
 }
 function addCat2Prompt(cat1,type){const n=prompt(`为「${cat1}」添加标签`);if(n&&n.trim()){catManager.addCat2(cat1,n.trim(),type);renderCatMgmt();showToast('已添加');}}
 async function addCat1(type){const inp=$('new-cat1-input');const n=inp.value.trim();if(!n)return;await catManager.addCat1(n,type);inp.value='';renderCatMgmt();showToast('已添加');}
+
+// 批量导入标签
+async function batchImportTags(){
+  const raw=$('batch-tags-input').value.trim();
+  if(!raw){showToast('请按模板格式输入标签');return;}
+  let count=0;
+  const lines=raw.split('\n');
+  for(const line of lines){
+    const idx=line.indexOf(':');
+    if(idx<0) continue;
+    const cat1=line.slice(0,idx).trim();
+    if(!cat1) continue;
+    const tagsStr=line.slice(idx+1).trim();
+    const tags=tagsStr.split(/[,，、\s]+/).filter(Boolean);
+    let type='expense';
+    if(catManager.isIncome(cat1)) type='income';
+    for(const tag of tags){
+      if(!tag||tag.length>20) continue;
+      await catManager.addCat2(cat1,tag,type);
+      count++;
+    }
+  }
+  renderCatMgmt();
+  showToast(`已导入 ${count} 个标签`);
+}
+
+// CSV 导入后自动匹配标签
+async function autoMatchTagsForTxns(txns){
+  for(const txn of txns){
+    if(txn.tag) continue;
+    let candidate=null;
+    if(txn.category2&&txn.category2!=='自定义'&&txn.category2!=='无标签'){
+      candidate=txn.category2;
+    } else if(txn.note&&txn.note.startsWith('#')){
+      const si=txn.note.indexOf(' ');
+      candidate=si>1?txn.note.slice(1,si):txn.note.slice(1);
+    }
+    if(!candidate) continue;
+    const existing=await catManager.getAllCat2List(txn.category1,txn.type);
+    const match=existing.find(t=>t===candidate||t.includes(candidate)||candidate.includes(t));
+    if(match){
+      txn.tag=match;
+      txn.category2=match;
+      if(txn.note&&txn.note.startsWith('#'+candidate)){
+        const rest=txn.note.slice(candidate.length+1).trim();
+        txn.note=rest||null;
+      }
+      await db.updateTransaction(txn);
+    } else {
+      // 自动创建新标签
+      await catManager.addCat2(txn.category1,candidate,txn.type);
+      txn.tag=candidate;
+      txn.category2=candidate;
+      await db.updateTransaction(txn);
+    }
+  }
+}
 
 // ---- 日期弹窗 ----
 function showDatePicker(){$('txn-date-input').value=state.sheetDate;$('overlay-date-picker').classList.remove('hidden');}
