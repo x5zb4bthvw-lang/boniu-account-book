@@ -29,8 +29,12 @@ body {
   padding-top: var(--safe-top);
 }
 input, textarea { user-select: text; -webkit-user-select: text; }
-.page { display: none; padding-bottom: calc(64px + var(--safe-bottom) + 16px); }
+.page { display: none; padding-bottom: calc(72px + var(--safe-bottom) + 16px); }
 .page.active { display: block; }
+.page.sticky-layout { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; padding-bottom: 0; }
+.page.sticky-layout.active { display: flex; }
+.sticky-header { flex-shrink: 0; background: var(--bg); z-index: 10; }
+.sticky-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(72px + var(--safe-bottom) + 16px); }
 
 /* ---- 导航 ---- */
 .nav-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--bg); position: sticky; top: 0; z-index: 100; }
@@ -281,5 +285,66 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .tag-chip.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 /* TabBar 始终固定 + 页面底部留白 */
-.tab-bar { position: fixed; }
-.page { padding-bottom: calc(72px + var(--safe-bottom) + 16px); }
+.tab-bar {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 100% !important;
+  max-width: 428px !important;
+  height: calc(60px + var(--safe-bottom)) !important;
+  padding-bottom: var(--safe-bottom) !important;
+  background: #fff !important;
+  border-top: 1px solid var(--divider) !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-around !important;
+  z-index: 9999 !important;
+}
+
+/* ============ 首页冻结头部 ============ */
+.home-top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: #fff;
+}
+.home-top-bar .year { font-size: 16px; font-weight: 600; }
+.home-top-bar .month { font-size: 20px; font-weight: 700; }
+.home-top-bar .icons { display: flex; gap: 16px; }
+.home-top-bar .icons span { font-size: 18px; cursor: pointer; }
+
+.home-summary-row {
+  display: flex; align-items: center; padding: 10px 16px 14px; gap: 16px;
+}
+.home-summary-row .sum-block { flex: 1; }
+.home-summary-row .sum-label { font-size: 12px; color: var(--text-secondary); }
+.home-summary-row .sum-value { font-size: 22px; font-weight: 800; }
+.home-summary-row .sum-value.inc { color: var(--income); }
+.home-summary-row .sum-value.exp { color: var(--expense); }
+
+.home-quick-actions {
+  display: flex; gap: 10px; padding: 0 16px 10px; background: var(--bg);
+}
+.home-quick-card {
+  flex: 1; padding: 12px 8px; border-radius: 10px; background: #fff;
+  text-align: center; cursor: pointer; font-size: 13px; font-weight: 500;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.home-quick-card .icon { font-size: 22px; }
+.home-quick-card:active { background: var(--divider); }
+
+/* ============ 左滑删除 ============ */
+.swipe-row {
+  position: relative; overflow: hidden;
+}
+.swipe-row .swipe-content {
+  position: relative; z-index: 2; background: #fff; transition: transform .2s;
+}
+.swipe-row .swipe-delete {
+  position: absolute; right: 0; top: 0; bottom: 0; z-index: 1;
+  width: 72px; display: flex; align-items: center; justify-content: center;
+  background: #d32f2f; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+
+/* ============ 金额右对齐 ============ */
+.amount-display { text-align: right; padding: 8px 24px; font-size: 40px; font-weight: 500; color: var(--text); min-height: 56px; }
+.amount-display .currency { font-size: 40px; font-weight: 500; }

@@ -19,27 +19,45 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <!-- ==================== 明细 ==================== -->
-  <div class="page active" id="page-transactions">
-    <div class="nav-header">
-      <div class="nav-title">🌸 波妞记账</div>
-      <button class="nav-icon" onclick="showSearch()">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </button>
+  <!-- ==================== 明细（冻结头部+滚动列表） ==================== -->
+  <div class="page sticky-layout active" id="page-transactions">
+    <!-- 冻结头部 -->
+    <div class="sticky-header">
+      <!-- 第一行：年月 + 图标 -->
+      <div class="home-top-bar">
+        <span class="year" id="home-year">2026年</span>
+        <span class="month" id="home-month-big">07月</span>
+        <div class="icons">
+          <span onclick="showDatePicker()">📅</span>
+          <span onclick="showSearch()">🔍</span>
+        </div>
+      </div>
+      <!-- 第二行：收支汇总 -->
+      <div class="home-summary-row">
+        <div class="sum-block"><div class="sum-label">收入</div><div class="sum-value inc" id="home-income">¥0.00</div></div>
+        <div class="sum-block"><div class="sum-label">支出</div><div class="sum-value exp" id="home-expense">¥0.00</div></div>
+      </div>
+      <!-- 第三行：快捷入口 -->
+      <div class="home-quick-actions">
+        <div class="home-quick-card" onclick="switchTab('transactions')"><span class="icon">📋</span>账单</div>
+        <div class="home-quick-card" onclick="switchTab('stats')"><span class="icon">📊</span>图表</div>
+        <div class="home-quick-card" onclick="switchTab('assets')"><span class="icon">💰</span>资产管家</div>
+        <div class="home-quick-card" onclick="switchTab('discover')"><span class="icon">💡</span>发现</div>
+      </div>
+      <!-- 月份切换 -->
+      <div class="month-picker">
+        <button class="month-picker-arrow" onclick="homePrevMonth()">‹</button>
+        <span class="month-picker-text" id="home-month-title"></span>
+        <button class="month-picker-arrow" id="home-next-arrow" onclick="homeNextMonth()">›</button>
+      </div>
     </div>
-    <div class="month-picker">
-      <button class="month-picker-arrow" onclick="homePrevMonth()">‹</button>
-      <span class="month-picker-text" id="home-month-title"></span>
-      <button class="month-picker-arrow" id="home-next-arrow" onclick="homeNextMonth()">›</button>
-    </div>
-    <div class="home-summary" id="home-summary">
-      <div class="item"><div class="lbl">收入</div><div class="val inc" id="home-income">¥0</div></div>
-      <div class="item"><div class="lbl">支出</div><div class="val exp" id="home-expense">¥0</div></div>
-    </div>
-    <div id="home-day-groups"></div>
-    <div class="empty-state hidden" id="home-empty">
-      <div style="font-size:40px">📝</div>
-      <div class="empty-state-text">本月还没有记录</div>
+    <!-- 滚动列表 -->
+    <div class="sticky-scroll" id="home-scroll">
+      <div id="home-day-groups"></div>
+      <div class="empty-state hidden" id="home-empty">
+        <div style="font-size:40px">📝</div>
+        <div class="empty-state-text">本月还没有记录</div>
+      </div>
     </div>
   </div>
 

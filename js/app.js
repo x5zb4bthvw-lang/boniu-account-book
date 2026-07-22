@@ -189,18 +189,30 @@ async function addTagFromMgr() {
   refreshTagMgr(); renderStep2Tags();
 }
 
-// ---- 保存 ----
+// ---- 保存（标签和备注空格分离）----
 async function sheetComplete() {
   if(!state.sheetAmount) return;
-  const noteVal=$('step2-note').value.trim();
+  const noteRaw=$('step2-note').value.trim();
+  // 解析 #标签 备注内容
+  let tag=state.sheetTag||null, note=noteRaw||null;
+  if(noteRaw&&noteRaw.startsWith('#')){
+    const spaceIdx=noteRaw.indexOf(' ');
+    if(spaceIdx>1){
+      tag=noteRaw.slice(1,spaceIdx);
+      note=noteRaw.slice(spaceIdx+1).trim()||null;
+    } else {
+      tag=noteRaw.slice(1)||null;
+      note=null;
+    }
+  }
   const txn={
     id: state.editingTxnId||crypto.randomUUID(),
     type: state.sheetType, amount: state.sheetAmount,
     category1: state.sheetCat1,
-    category2: state.sheetTag||'自定义',
-    tag: state.sheetTag||null,
+    category2: tag||'无标签',
+    tag: tag||null,
     date: state.sheetDate,
-    note: noteVal||null,
+    note: note||null,
     createdAt: new Date().toISOString(),
   };
   if(state.editingTxnId) await db.updateTransaction(txn);
@@ -216,6 +228,9 @@ async function sheetComplete() {
 async function renderHome() {
   const {start,end}=monthRange(state.currentMonth);
   updateMonthTitle();
+  const y=state.currentMonth.getFullYear(), m=state.currentMonth.getMonth()+1;
+  $('home-year').textContent=y+'年';
+  $('home-month-big').textContent=String(m).padStart(2,'0')+'月';
   const [income,expense,all]=await Promise.all([db.getSum('income',start,end),db.getSum('expense',start,end),db.getTransactions({startDate:start,endDate:end,limit:300})]);
   $('home-income').textContent='¥'+fmt(income);
   $('home-expense').textContent='¥'+fmt(expense);
@@ -231,6 +246,8 @@ async function renderHome() {
       return`<div class="day-group"><div class="day-header"><span><span class="day-date">${dl(g.date)}</span><span class="day-weekday">${wd(g.date)}</span></span><span class="day-exp">${expSum>0?`<span class="amt">¥${fmt(expSum)}</span>`:'¥0.00'}</span></div><div class="day-body">${g.txns.map(t=>txnRowHTML(t)).join('')}</div></div>`;
     }).join('');
   }
+  // 绑定左滑删除事件
+  bindSwipeDelete();
 }
 
 function groupByDay(txns) {
@@ -240,8 +257,51 @@ function groupByDay(txns) {
 
 function txnRowHTML(t) {
   const inc=t.type==='income', icon=catManager.getIcon(t.category1);
-  const label=t.tag||t.category2||t.category1;
-  return`<div class="txn-row" onclick="showTxnDetail('${t.id}')"><div class="txn-icon-wrap">${icon}</div><div class="txn-info"><span class="txn-cat">${esc(t.category1)}</span>${label&&label!==t.category1?`<span class="txn-tag">#${esc(label)}</span>`:''}</div><div class="txn-amount ${inc?'income':''}">${inc?'+':'-'}¥${fmt(t.amount)}</div></div>`;
+  const tag=t.tag||'';
+  const noteOnly=t.note||'';
+  return`<div class="swipe-row" data-id="${t.id}">
+    <div class="swipe-delete" onclick="swipeDeleteTxn('${t.id}')">删除</div>
+    <div class="swipe-content txn-row" ontouchstart="swipeStart(event)" ontouchmove="swipeMove(event)" ontouchend="swipeEnd(event)" onclick="showTxnDetail('${t.id}')">
+      <div class="txn-icon-wrap">${icon}</div>
+      <div class="txn-info">
+        <span class="txn-cat">${esc(t.category1)}</span>
+        ${tag?`<span class="txn-tag">#${esc(tag)}</span>`:''}
+        ${noteOnly?`<span class="txn-note" style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px">${esc(noteOnly)}</span>`:''}
+      </div>
+      <div class="txn-amount ${inc?'income':''}">${inc?'+':'-'}¥${fmt(t.amount)}</div>
+    </div>
+  </div>`;
+}
+
+// ---- 左滑删除 ----
+let swipeStartX=0, swipeCurrentRow=null;
+function swipeStart(e){ swipeStartX=e.touches[0].clientX; swipeCurrentRow=e.currentTarget; }
+function swipeMove(e){
+  if(!swipeCurrentRow) return;
+  const dx=e.touches[0].clientX-swipeStartX;
+  if(dx<-20) swipeCurrentRow.style.transform=`translateX(${Math.max(dx,-72)}px)`;
+}
+function swipeEnd(e){
+  if(!swipeCurrentRow) return;
+  const dx=(e.changedTouches[0]?.clientX||swipeStartX)-swipeStartX;
+  if(dx<-40) swipeCurrentRow.style.transform='translateX(-72px)';
+  else swipeCurrentRow.style.transform='translateX(0)';
+  swipeCurrentRow=null;
+}
+async function swipeDeleteTxn(id){
+  await db.deleteTransaction(id);
+  showToast('已删除');
+  // 从DOM移除
+  const row=document.querySelector(`.swipe-row[data-id="${id}"]`);
+  if(row) row.remove();
+  // 检查是否组为空
+  setTimeout(()=>{
+    const groups=$('home-day-groups');
+    if(groups&&!groups.querySelector('.swipe-row')) renderHome();
+  },300);
+}
+function bindSwipeDelete(){
+  // swipe事件已在HTML中绑定
 }
 
 function homePrevMonth(){ state.currentMonth.setMonth(state.currentMonth.getMonth()-1); renderHome(); }
@@ -337,15 +397,21 @@ async function refreshStats() {
 
 async function showCatDetail(cat1,type,start,end){
   const txns=await db.getTransactions({type,category1:cat1,startDate:start,endDate:end});
-  const map={};txns.forEach(t=>{const k=t.tag||t.category2||'无标签';map[k]=(map[k]||0)+t.amount;});
+  // 按标签汇总
+  const map={};
+  txns.forEach(t=>{
+    const k=t.tag||t.category2||'无标签';
+    if(k==='自定义') { map['无标签']=(map['无标签']||0)+t.amount; }
+    else { map[k]=(map[k]||0)+t.amount; }
+  });
   const list=Object.entries(map).map(([n,a])=>({name:n,amount:a})).sort((a,b)=>b.amount-a.amount);
   const total=list.reduce((s,c)=>s+c.amount,0);
   const html=`
     <div class="page active" id="page-cat-detail">
       <div class="nav-header"><button class="nav-icon" onclick="closeSubPage('page-cat-detail','stats')">←</button><div class="nav-title">${catManager.getIcon(cat1)} ${cat1}</div><div style="width:36px"></div></div>
       <div class="text-center mt-16"><div style="font-size:13px;color:var(--text-secondary)">总计</div><div style="font-size:30px;font-weight:800;color:${type==='income'?'var(--income)':'var(--expense)'}">¥${fmt(total)}</div></div>
-      <div class="section-title">标签明细</div>
-      <div class="category-rank">${list.map((c,i)=>`<div class="rank-row"><span class="rank-num ${i<3?'top':''}">${i+1}</span><span class="rank-name">${c.name}</span><span class="rank-amount">¥${fmt(c.amount)}</span><span class="rank-pct">${total>0?(c.amount/total*100).toFixed(1):0}%</span></div>`).join('')||'<div class="empty-state"><div class="empty-state-text">暂无数据</div></div>'}</div>
+      <div class="section-title">按标签汇总</div>
+      <div class="category-rank">${list.map((c,i)=>`<div class="rank-row" style="cursor:default"><span class="rank-num ${i<3?'top':''}">${i+1}</span><span class="rank-name">🏷️ ${c.name}</span><span class="rank-amount">¥${fmt(c.amount)}</span><span class="rank-pct">${total>0?(c.amount/total*100).toFixed(1):0}%</span></div>`).join('')||'<div class="empty-state"><div class="empty-state-text">暂无数据</div></div>'}</div>
     </div>`;
   const old=document.querySelector('.page.active');if(old)old.classList.remove('active');
   const tmp=document.createElement('div');tmp.innerHTML=html;document.getElementById('app').appendChild(tmp.firstElementChild);
