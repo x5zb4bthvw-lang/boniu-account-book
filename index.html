@@ -60,6 +60,59 @@
     </div>
   </div>
 
+  <!-- ==================== 编辑备注/标签页 ==================== -->
+  <div class="page" id="page-edit-note">
+    <div class="nav-header">
+      <button class="nav-icon" onclick="closeEditNote()">取消</button>
+      <div class="nav-title" id="edit-note-title"></div>
+      <button class="nav-icon" style="color:var(--primary);font-weight:600" onclick="saveEditNote()">完成</button>
+    </div>
+    <span id="edit-note-id" hidden></span>
+    <div style="padding:16px 20px">
+      <input id="edit-note-input" class="input-field" placeholder="请输入备注" style="text-align:center;font-size:16px">
+    </div>
+    <div style="padding:0 20px">
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">🏷️ 选择标签</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="edit-note-tags"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 编辑金额/日期页 ==================== -->
+  <div class="page" id="page-edit-amount">
+    <div class="nav-header">
+      <button class="nav-icon" onclick="closeEditAmount()">取消</button>
+      <div class="nav-title" id="edit-amount-title"></div>
+      <button class="nav-icon" style="color:var(--primary);font-weight:600" onclick="saveEditAmount()">完成</button>
+    </div>
+    <span id="edit-amount-id" hidden></span>
+    <div class="amount-display" id="edit-amount-display" style="text-align:center;padding-right:0">¥<span class="currency">0.00</span></div>
+    <div style="text-align:center;padding:4px 0 12px;font-size:14px;color:var(--text-secondary);cursor:pointer" onclick="openWheelPicker()" id="edit-amount-date">2026/07/22</div>
+    <!-- 自定义数字键盘 -->
+    <div class="num-pad" style="margin-top:auto">
+      <div class="num-row"><button class="num-key" onclick="eaNk('7')">7</button><button class="num-key" onclick="eaNk('8')">8</button><button class="num-key" onclick="eaNk('9')">9</button></div>
+      <div class="num-row"><button class="num-key" onclick="eaNk('4')">4</button><button class="num-key" onclick="eaNk('5')">5</button><button class="num-key" onclick="eaNk('6')">6</button></div>
+      <div class="num-row"><button class="num-key" onclick="eaNk('1')">1</button><button class="num-key" onclick="eaNk('2')">2</button><button class="num-key" onclick="eaNk('3')">3</button></div>
+      <div class="num-row"><button class="num-key" onclick="eaNk('.')">.</button><button class="num-key" onclick="eaNk('0')">0</button><button class="num-key" onclick="eaNk('⌫')" style="font-size:18px">⌫</button></div>
+    </div>
+  </div>
+
+  <!-- iOS 滚轮日期选择器 -->
+  <div class="sheet-overlay hidden" id="overlay-wheel-picker" onclick="if(event.target===this)closeWheelPicker()">
+    <div class="sheet" style="max-height:320px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--divider)">
+        <button style="color:var(--text-secondary);background:none;border:none;font-size:15px;cursor:pointer" onclick="closeWheelPicker()">取消</button>
+        <span style="font-weight:600">选择日期</span>
+        <button style="color:var(--primary);background:none;border:none;font-size:15px;font-weight:600;cursor:pointer" onclick="confirmWheelPicker()">确定</button>
+      </div>
+      <div style="display:flex;height:200px;overflow:hidden;position:relative" id="wheel-container">
+        <div style="flex:1;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;text-align:center;padding:80px 0" id="wheel-year" onscroll="wheelScrolled()"></div>
+        <div style="flex:1;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;text-align:center;padding:80px 0" id="wheel-month" onscroll="wheelScrolled()"></div>
+        <div style="flex:1;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;text-align:center;padding:80px 0" id="wheel-day" onscroll="wheelScrolled()"></div>
+        <div style="position:absolute;top:50%;left:0;right:0;height:40px;transform:translateY(-50%);border-top:1px solid var(--divider);border-bottom:1px solid var(--divider);pointer-events:none"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== 日历页面 ==================== -->
   <div class="page" id="page-calendar">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 8px">

@@ -21,6 +21,9 @@ const state = {
   calSelected: new Date().toISOString().split('T')[0],
   // 账单汇总
   billYear: new Date().getFullYear(), billTab: 'monthly',
+  // 编辑
+  editNoteId: null, editAmountId: null, editAmountInput: '', editAmountVal: 0,
+  editAmountDate: '', wheelYear: 2026, wheelMonth: 7, wheelDay: 22,
 };
 
 // ---- 工具 ----
@@ -266,14 +269,16 @@ function txnRowHTML(t) {
   const noteOnly=t.note||'';
   return`<div class="swipe-row" data-id="${t.id}">
     <div class="swipe-delete" onclick="swipeDeleteTxn('${t.id}')">删除</div>
-    <div class="swipe-content txn-row" ontouchstart="swipeStart(event)" ontouchmove="swipeMove(event)" ontouchend="swipeEnd(event)" onclick="showTxnDetail('${t.id}')">
-      <div class="txn-icon-wrap">${icon}</div>
-      <div class="txn-info">
-        <span class="txn-cat">${esc(t.category1)}</span>
-        ${tag?`<span class="txn-tag">#${esc(tag)}</span>`:''}
-        ${noteOnly?`<span class="txn-note" style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px">${esc(noteOnly)}</span>`:''}
+    <div class="swipe-content txn-row" ontouchstart="swipeStart(event)" ontouchmove="swipeMove(event)" ontouchend="swipeEnd(event)">
+      <div class="txn-left" onclick="openEditNote('${t.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer">
+        <div class="txn-icon-wrap">${icon}</div>
+        <div class="txn-info">
+          <span class="txn-cat">${esc(t.category1)}</span>
+          ${tag?`<span class="txn-tag">#${esc(tag)}</span>`:''}
+          ${noteOnly?`<span class="txn-note" style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px">${esc(noteOnly)}</span>`:''}
+        </div>
       </div>
-      <div class="txn-amount ${inc?'income':''}">${inc?'+':'-'}¥${fmt(t.amount)}</div>
+      <div class="txn-amount ${inc?'income':''}" onclick="openEditAmount('${t.id}')" style="cursor:pointer;flex-shrink:0">${inc?'+':'-'}¥${fmt(t.amount)}</div>
     </div>
   </div>`;
 }
@@ -515,8 +520,150 @@ async function deleteAccountFromForm(){if(!state.editingAccountId||!confirm('确
 
 // ============================================================
 // ============================================================
-//  账单汇总页
+//  编辑备注/标签（点击左侧）
 // ============================================================
+async function openEditNote(id){
+  const t=await db.getTransaction(id); if(!t) return;
+  state.editNoteId=id;
+  const icon=catManager.getIcon(t.category1);
+  $('edit-note-title').textContent=icon+' '+t.category1;
+  $('edit-note-input').value=t.note||'';
+  // 标签
+  const tags=await catManager.getAllCat2List(t.category1, t.type);
+  const selTag=t.tag||'';
+  $('edit-note-tags').innerHTML=tags.map(tag=>`<span class="tag-chip-inline" style="${tag===selTag?'background:var(--primary);color:#fff;border-color:var(--primary)':''}" onclick="pickEditTag('${tag}')">#${tag}</span>`).join('')||'<span style="font-size:12px;color:var(--text-secondary)">暂无标签</span>';
+  $('page-edit-note').classList.add('active');
+  document.querySelector('.tab-bar').style.display='none';
+}
+function closeEditNote(){
+  $('page-edit-note').classList.remove('active');
+  document.querySelector('.tab-bar').style.display='flex';
+}
+function pickEditTag(tag){
+  const cur=$('edit-note-input').value;
+  // 替换或追加标签
+  const hashIdx=cur.indexOf('#');
+  if(hashIdx>=0){
+    const afterHash=cur.slice(hashIdx+1).split(' ')[0];
+    $('edit-note-input').value=cur.replace('#'+afterHash,'#'+tag);
+  } else {
+    $('edit-note-input').value='#'+tag+(cur?' '+cur:'');
+  }
+  // 高亮选中的标签 chip
+  document.querySelectorAll('#edit-note-tags .tag-chip-inline').forEach(c=>{
+    c.style.background=c.textContent==='#'+tag?'var(--primary)':'#fff';
+    c.style.color=c.textContent==='#'+tag?'#fff':'var(--text)';
+    c.style.borderColor=c.textContent==='#'+tag?'var(--primary)':'var(--divider)';
+  });
+}
+async function saveEditNote(){
+  const id=state.editNoteId; if(!id) return;
+  const t=await db.getTransaction(id); if(!t) return;
+  const noteRaw=$('edit-note-input').value.trim();
+  let tag=t.tag||null, note=noteRaw||null;
+  if(noteRaw&&noteRaw.startsWith('#')){
+    const si=noteRaw.indexOf(' ');
+    if(si>1){ tag=noteRaw.slice(1,si); note=noteRaw.slice(si+1).trim()||null; }
+    else { tag=noteRaw.slice(1)||null; note=null; }
+  } else { tag=null; }
+  t.tag=tag||null; t.category2=tag||'无标签'; t.note=note||null;
+  await db.updateTransaction(t);
+  showToast('修改成功');
+  closeEditNote(); renderHome();
+}
+
+// ============================================================
+//  编辑金额/日期（点击右侧）
+// ============================================================
+async function openEditAmount(id){
+  const t=await db.getTransaction(id); if(!t) return;
+  state.editAmountId=id;
+  const icon=catManager.getIcon(t.category1);
+  $('edit-amount-title').textContent=icon+' '+t.category1;
+  state.editAmountInput=fmt(t.amount);
+  state.editAmountVal=t.amount;
+  state.editAmountDate=t.date;
+  $('edit-amount-display').innerHTML='¥<span class="currency">'+state.editAmountInput+'</span>';
+  $('edit-amount-date').textContent=state.editAmountDate.replace(/-/g,'/');
+  $('page-edit-amount').classList.add('active');
+  document.querySelector('.tab-bar').style.display='none';
+}
+function closeEditAmount(){
+  $('page-edit-amount').classList.remove('active');
+  document.querySelector('.tab-bar').style.display='flex';
+}
+function eaNk(key){
+  if(key==='⌫') state.editAmountInput=state.editAmountInput.slice(0,-1);
+  else if(key==='.'){
+    if(!state.editAmountInput) state.editAmountInput='0.';
+    else if(!state.editAmountInput.includes('.')) state.editAmountInput+='.';
+  }
+  else {
+    if(state.editAmountInput==='0'&&key!=='0') state.editAmountInput=key;
+    else if(state.editAmountInput==='0'&&key==='0'){}
+    else state.editAmountInput+=key;
+  }
+  state.editAmountVal=parseFloat(state.editAmountInput)||0;
+  $('edit-amount-display').innerHTML='¥<span class="currency">'+(state.editAmountInput||'0.00')+'</span>';
+}
+async function saveEditAmount(){
+  const id=state.editAmountId; if(!id) return;
+  const t=await db.getTransaction(id); if(!t) return;
+  if(!state.editAmountVal) return;
+  t.amount=state.editAmountVal; t.date=state.editAmountDate;
+  await db.updateTransaction(t);
+  showToast('修改成功');
+  closeEditAmount(); renderHome();
+}
+
+// iOS 滚轮日期选择器
+function openWheelPicker(){
+  const d=new Date(state.editAmountDate);
+  state.wheelYear=d.getFullYear(); state.wheelMonth=d.getMonth()+1; state.wheelDay=d.getDate();
+  renderWheels();
+  $('overlay-wheel-picker').classList.remove('hidden');
+  // 滚动到选中位置
+  setTimeout(()=>{
+    scrollWheelTo('wheel-year',state.wheelYear-2020);
+    scrollWheelTo('wheel-month',state.wheelMonth-1);
+    scrollWheelTo('wheel-day',state.wheelDay-1);
+  },100);
+}
+function closeWheelPicker(){$('overlay-wheel-picker').classList.add('hidden');}
+function confirmWheelPicker(){
+  state.editAmountDate=`${state.wheelYear}-${String(state.wheelMonth).padStart(2,'0')}-${String(state.wheelDay).padStart(2,'0')}`;
+  $('edit-amount-date').textContent=state.editAmountDate.replace(/-/g,'/');
+  closeWheelPicker();
+}
+function renderWheels(){
+  let y='',m='',d='';
+  for(let i=2020;i<=2030;i++) y+=`<div class="wheel-item" data-val="${i}">${i}年</div>`;
+  for(let i=1;i<=12;i++) m+=`<div class="wheel-item" data-val="${i}">${i}月</div>`;
+  const maxDay=new Date(state.wheelYear,state.wheelMonth,0).getDate();
+  for(let i=1;i<=maxDay;i++) d+=`<div class="wheel-item" data-val="${i}">${i}日</div>`;
+  $('wheel-year').innerHTML=y; $('wheel-month').innerHTML=m; $('wheel-day').innerHTML=d;
+}
+function scrollWheelTo(id,idx){
+  const el=$(id); if(!el) return;
+  el.scrollTop=idx*40; // 每项40px高度
+}
+function wheelScrolled(){
+  // 滚动到最近的项
+  ['wheel-year','wheel-month','wheel-day'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    const items=el.querySelectorAll('.wheel-item');
+    const scrollTop=el.scrollTop;
+    const idx=Math.round(scrollTop/40);
+    const target=Math.max(0,Math.min(items.length-1,idx));
+    el.scrollTo({top:target*40,behavior:'smooth'});
+    const val=items[target]?.dataset.val;
+    if(val){
+      if(id==='wheel-year') state.wheelYear=parseInt(val);
+      else if(id==='wheel-month'){ state.wheelMonth=parseInt(val); renderWheels(); }
+      else if(id==='wheel-day') state.wheelDay=parseInt(val);
+    }
+  });
+}
 function openBill(){
   state.billYear=new Date().getFullYear(); state.billTab='monthly';
   document.querySelectorAll('#bill-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='monthly'));
