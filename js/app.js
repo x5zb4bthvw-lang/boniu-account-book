@@ -446,7 +446,7 @@ async function showTxnDetail(id){
   $('page-txn-detail').classList.add('active');
   document.querySelector('.tab-bar').style.display='none';
 }
-function closeTxnDetail(){$('page-txn-detail').classList.remove('active');document.querySelector('.tab-bar').style.display='flex';switchTab('transactions');}
+function closeTxnDetail(){hideAllPages();$('page-transactions').classList.add('active');document.querySelector('.tab-bar').style.display='flex';}
 async function deleteTxnDetail(){
   const id=$('detail-id').dataset.id;if(!id||!confirm('确认删除？'))return;
   await db.deleteTransaction(id);showToast('已删除');closeTxnDetail();
@@ -522,8 +522,10 @@ async function deleteAccountFromForm(){if(!state.editingAccountId||!confirm('确
 // ============================================================
 //  编辑备注/标签（点击左侧）
 // ============================================================
+function hideAllPages(){ document.querySelectorAll('.page.active').forEach(p=>p.classList.remove('active')); }
 async function openEditNote(id){
   const t=await db.getTransaction(id); if(!t) return;
+  hideAllPages();
   state.editNoteId=id;
   const icon=catManager.getIcon(t.category1);
   $('edit-note-title').textContent=icon+' '+t.category1;
@@ -536,7 +538,7 @@ async function openEditNote(id){
   document.querySelector('.tab-bar').style.display='none';
 }
 function closeEditNote(){
-  $('page-edit-note').classList.remove('active');
+  hideAllPages(); $('page-transactions').classList.add('active');
   document.querySelector('.tab-bar').style.display='flex';
 }
 function pickEditTag(tag){
@@ -577,6 +579,7 @@ async function saveEditNote(){
 // ============================================================
 async function openEditAmount(id){
   const t=await db.getTransaction(id); if(!t) return;
+  hideAllPages();
   state.editAmountId=id;
   const icon=catManager.getIcon(t.category1);
   $('edit-amount-title').textContent=icon+' '+t.category1;
@@ -589,7 +592,7 @@ async function openEditAmount(id){
   document.querySelector('.tab-bar').style.display='none';
 }
 function closeEditAmount(){
-  $('page-edit-amount').classList.remove('active');
+  hideAllPages(); $('page-transactions').classList.add('active');
   document.querySelector('.tab-bar').style.display='flex';
 }
 function eaNk(key){
@@ -665,6 +668,7 @@ function wheelScrolled(){
   });
 }
 function openBill(){
+  hideAllPages();
   state.billYear=new Date().getFullYear(); state.billTab='monthly';
   document.querySelectorAll('#bill-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='monthly'));
   $('page-bill').classList.add('active');
@@ -672,7 +676,7 @@ function openBill(){
   renderBill();
 }
 function closeBill(){
-  $('page-bill').classList.remove('active');
+  hideAllPages(); $('page-transactions').classList.add('active');
   document.querySelector('.tab-bar').style.display='flex';
 }
 function switchBillTab(tab){
@@ -741,6 +745,7 @@ async function renderYearlyBill(){
 //  日历页面
 // ============================================================
 function openCalendar(){
+  hideAllPages();
   state.calYear=new Date().getFullYear();
   state.calMonth=new Date().getMonth()+1;
   state.calSelected=today();
@@ -749,7 +754,7 @@ function openCalendar(){
   renderCalendar();
 }
 function closeCalendar(){
-  $('page-calendar').classList.remove('active');
+  hideAllPages(); $('page-transactions').classList.add('active');
   document.querySelector('.tab-bar').style.display='flex';
 }
 function calPrevMonth(){
