@@ -1,122 +1,90 @@
 /* ============================================
-   波妞记账 — 图表模块 (依赖 Chart.js)
+   波妞记账 — 图表模块 (Chart.js)
    ============================================ */
 
 class ChartRenderer {
-  constructor() {
-    this.charts = {};
-  }
+  constructor() { this.charts = {}; }
 
-  // ---- 月度收支柱状图 ----
-  renderMonthlyBar(canvasId, monthlyData) {
+  renderMainBar(canvasId, labels, data, type) {
     this._destroy(canvasId);
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-
-    const labels = monthlyData.map(m => m.month + '月');
-    const income = monthlyData.map(m => m.income);
-    const expense = monthlyData.map(m => m.expense);
+    const color = type === 'income' ? 'rgba(46,125,50,0.7)' : 'rgba(255,87,34,0.7)';
 
     this.charts[canvasId] = new Chart(ctx, {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          { label: '收入', data: income, backgroundColor: 'rgba(52,199,89,0.6)', borderRadius: 4 },
-          { label: '支出', data: expense, backgroundColor: 'rgba(255,59,48,0.6)', borderRadius: 4 },
-        ],
+        datasets: [{
+          data,
+          backgroundColor: color,
+          borderRadius: 4,
+        }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { callback: v => '¥' + (v/1000).toFixed(0) + 'k' } } },
-      },
-    });
-  }
-
-  // ---- 分类饼图 ----
-  renderPie(canvasId, data, colorPalette) {
-    this._destroy(canvasId);
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!data || data.length === 0) {
-      // 清空 canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
-
-    const labels = data.map(d => d.name);
-    const values = data.map(d => d.amount);
-    const colors = colorPalette || this._pinkPalette(data.length);
-
-    this.charts[canvasId] = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '55%',
-        plugins: {
-          legend: { display: false },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { callback: v => '¥'+v } },
+          x: { grid: { display: false } },
         },
       },
     });
   }
 
-  // ---- 资产趋势折线图 ----
-  renderTrendLine(canvasId, trendData) {
+  renderPie(canvasId, data, colors) {
     this._destroy(canvasId);
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-
-    const labels = trendData.map(d => d.month + '月');
-    const assets = trendData.map(d => d.assets);
-    const liabilities = trendData.map(d => d.liabilities);
-
+    if (!data || !data.length) return;
     this.charts[canvasId] = new Chart(ctx, {
-      type: 'line',
+      type: 'doughnut',
       data: {
-        labels,
-        datasets: [
-          { label: '资产', data: assets, borderColor: '#FF6B8A', backgroundColor: 'rgba(255,107,138,0.1)', fill: true, tension: 0.3, pointRadius: 2 },
-          { label: '负债', data: liabilities, borderColor: '#FF3B30', backgroundColor: 'rgba(255,59,48,0.05)', fill: true, tension: 0.3, pointRadius: 2 },
-        ],
+        labels: data.map(d => d.name),
+        datasets: [{ data: data.map(d => d.amount), backgroundColor: colors || this._palette(data.length), borderWidth: 0 }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '60%',
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: false, ticks: { callback: v => '¥' + (v/10000).toFixed(0) + 'w' } } },
       },
     });
   }
 
-  _pinkPalette(count) {
-    const base = [
-      '#FF6B8A', '#FF8FA3', '#FFB3C6', '#E55A75',
-      '#FF7B95', '#FF9EB5', '#FFC4D4', '#FFD4E0',
-      '#FF6B8A99', '#E55A7599', '#FF8FA399', '#FFB3C699',
-    ];
-    return base.slice(0, Math.max(count, 1));
+  renderMonthlyBar(canvasId, monthlyData) {
+    this._destroy(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const labels = monthlyData.map(m => m.month + '月');
+    this.charts[canvasId] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: '收入', data: monthlyData.map(m => m.income), backgroundColor: 'rgba(46,125,50,0.6)', borderRadius: 4 },
+          { label: '支出', data: monthlyData.map(m => m.expense), backgroundColor: 'rgba(255,87,34,0.6)', borderRadius: 4 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: '#f0f0f0' } }, x: { grid: { display: false } } },
+      },
+    });
   }
 
-  _destroy(canvasId) {
-    if (this.charts[canvasId]) {
-      this.charts[canvasId].destroy();
-      delete this.charts[canvasId];
-    }
+  _palette(n) {
+    const b = ['#2E7D32','#388E3C','#43A047','#4CAF50','#66BB6A','#81C784','#A5D6A7','#C8E6C9','#1B5E20','#2E7D32','#388E3C','#43A047'];
+    return b.slice(0, Math.max(n, 1));
   }
 
-  destroyAll() {
-    Object.keys(this.charts).forEach(id => this._destroy(id));
-  }
+  _destroy(id) { if (this.charts[id]) { this.charts[id].destroy(); delete this.charts[id]; } }
+  destroyAll() { Object.keys(this.charts).forEach(id => this._destroy(id)); }
 }
 
 const chartRenderer = new ChartRenderer();
