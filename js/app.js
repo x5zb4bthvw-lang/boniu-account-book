@@ -16,6 +16,9 @@ const state = {
   // 资产
   editingAccountId: null, accName: '', accType: 'cash', accBalance: 0, accNote: '', accCustomType: '',
   catMgmtType: 'expense',
+  // 日历
+  calYear: new Date().getFullYear(), calMonth: new Date().getMonth()+1,
+  calSelected: new Date().toISOString().split('T')[0],
 };
 
 // ---- 工具 ----
@@ -509,6 +512,87 @@ async function saveAccount(){
 async function deleteAccountFromForm(){if(!state.editingAccountId||!confirm('确认删除？'))return;await db.deleteAccount(state.editingAccountId);showToast('已删除');closeAddAccount();}
 
 // ============================================================
+// ============================================================
+//  日历页面
+// ============================================================
+function openCalendar(){
+  state.calYear=new Date().getFullYear();
+  state.calMonth=new Date().getMonth()+1;
+  state.calSelected=today();
+  $('page-calendar').classList.add('active');
+  document.querySelector('.tab-bar').style.display='none';
+  renderCalendar();
+}
+function closeCalendar(){
+  $('page-calendar').classList.remove('active');
+  document.querySelector('.tab-bar').style.display='flex';
+}
+function calPrevMonth(){
+  if(state.calMonth===1){ state.calYear--; state.calMonth=12; }
+  else state.calMonth--;
+  renderCalendar();
+}
+function calNextMonth(){
+  if(state.calMonth===12){ state.calYear++; state.calMonth=1; }
+  else state.calMonth++;
+  renderCalendar();
+}
+async function renderCalendar(){
+  const{calYear,calMonth}=state;
+  $('cal-month-title').textContent=`${calYear}年${String(calMonth).padStart(2,'0')}月`;
+  const firstDay=new Date(calYear,calMonth-1,1).getDay();
+  const firstDow=firstDay===0?6:firstDay-1; // 0=周一
+  const daysInMonth=new Date(calYear,calMonth,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth-1,0).getDate();
+  const ms=`${calYear}-${String(calMonth).padStart(2,'0')}-01`;
+  const me=`${calYear}-${String(calMonth).padStart(2,'0')}-${daysInMonth}`;
+  const txns=await db.getTransactions({startDate:ms,endDate:me});
+  const hasRecord=new Set(txns.map(t=>t.date));
+  const cells=[],todayStr=today();
+  for(let i=firstDow-1;i>=0;i--){
+    const d=daysInPrev-i;
+    const ds=`${calMonth===1?calYear-1:calYear}-${String(calMonth===1?12:calMonth-1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    cells.push({day:d,date:ds,other:true});
+  }
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    cells.push({day:d,date:ds,other:false});
+  }
+  const rem=42-cells.length;
+  for(let d=1;d<=rem;d++){
+    const ds=`${calMonth===12?calYear+1:calYear}-${String(calMonth===12?1:calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    cells.push({day:d,date:ds,other:true});
+  }
+  $('cal-grid').innerHTML=cells.map(c=>{
+    let cls='cal-cell';
+    if(c.other) cls+=' other-month';
+    if(c.date===todayStr) cls+=' today';
+    if(c.date===state.calSelected) cls+=' selected';
+    const dot=hasRecord.has(c.date)?'<div class="cal-dot"></div>':'';
+    return`<div class="${cls}" onclick="calPick('${c.date}')">${c.day}${dot}</div>`;
+  }).join('');
+  await calShowDay(state.calSelected);
+}
+function calPick(ds){
+  state.calSelected=ds;
+  const d=new Date(ds);
+  if(d.getFullYear()!==state.calYear||d.getMonth()+1!==state.calMonth){
+    state.calYear=d.getFullYear();
+    state.calMonth=d.getMonth()+1;
+    renderCalendar();
+  } else { renderCalendar(); }
+}
+async function calShowDay(ds){
+  const d=new Date(ds);
+  const wd=['日','一','二','三','四','五','六'][d.getDay()];
+  $('cal-selected-title').textContent=`${d.getMonth()+1}月${d.getDate()}日 星期${wd}`;
+  const txns=await db.getTransactions({startDate:ds,endDate:ds});
+  const expSum=txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  if(txns.length) $('cal-selected-title').textContent+=`  支出：¥${fmt(expSum)}`;
+  $('cal-selected-title').style.color=expSum>0?'var(--expense)':'var(--text)';
+  $('cal-txn-list').innerHTML=txns.length?txns.map(t=>txnRowHTML(t)).join(''):'';
+}
+
 //  搜索 / CSV / 类别设置
 // ============================================================
 function showSearch(){$('page-search').classList.add('active');document.querySelector('.tab-bar').style.display='none';doSearch();}

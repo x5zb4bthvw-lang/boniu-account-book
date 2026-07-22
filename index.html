@@ -28,7 +28,7 @@
         <span class="year" id="home-year">2026年</span>
         <span class="month" id="home-month-big">07月</span>
         <div class="icons">
-          <span onclick="showDatePicker()">📅</span>
+          <span onclick="openCalendar()">📅</span>
           <span onclick="showSearch()">🔍</span>
         </div>
       </div>
@@ -40,9 +40,8 @@
       <!-- 第三行：快捷入口 -->
       <div class="home-quick-actions">
         <div class="home-quick-card" onclick="switchTab('transactions')"><span class="icon">📋</span>账单</div>
-        <div class="home-quick-card" onclick="switchTab('stats')"><span class="icon">📊</span>图表</div>
+        <div class="home-quick-card" onclick="switchTab('stats')"><span class="icon">📊</span>预算</div>
         <div class="home-quick-card" onclick="switchTab('assets')"><span class="icon">💰</span>资产管家</div>
-        <div class="home-quick-card" onclick="switchTab('discover')"><span class="icon">💡</span>发现</div>
       </div>
       <!-- 月份切换 -->
       <div class="month-picker">
@@ -59,6 +58,28 @@
         <div class="empty-state-text">本月还没有记录</div>
       </div>
     </div>
+  </div>
+
+  <!-- ==================== 日历页面 ==================== -->
+  <div class="page" id="page-calendar">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 8px">
+      <button style="font-size:16px;color:var(--primary);background:none;border:none;cursor:pointer;padding:8px" onclick="closeCalendar()">← 返回</button>
+      <div style="display:flex;align-items:center;gap:16px">
+        <button style="font-size:18px;background:none;border:none;cursor:pointer;padding:4px 8px" onclick="calPrevMonth()">‹</button>
+        <span style="font-size:17px;font-weight:600" id="cal-month-title"></span>
+        <button style="font-size:18px;background:none;border:none;cursor:pointer;padding:4px 8px" onclick="calNextMonth()">›</button>
+      </div>
+      <div style="width:52px"></div>
+    </div>
+    <!-- 星期头 -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:4px 12px;font-size:13px;color:var(--text-secondary);font-weight:500">
+      <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+    </div>
+    <!-- 日期网格 -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px 0;padding:0 12px" id="cal-grid"></div>
+    <!-- 选中日期账单列表 -->
+    <div class="section-title mt-12" id="cal-selected-title"></div>
+    <div id="cal-txn-list" style="padding:0 16px"></div>
   </div>
 
   <!-- ==================== 图表页 ==================== -->
