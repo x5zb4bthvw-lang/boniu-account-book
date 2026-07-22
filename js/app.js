@@ -277,7 +277,7 @@ function txnRowHTML(t) {
         <div class="txn-icon-wrap">${icon}</div>
         <div class="txn-info">
           <span class="txn-cat">${esc(line1)}</span>
-          ${line2?`<span class="txn-note" style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px">${esc(line2)}</span>`:''}
+          ${line2?`<span class="txn-note" style="font-size:11px;color:var(--text-secondary)">${esc(line2)}</span>`:''}
         </div>
       </div>
       <div class="txn-amount ${inc?'income':''}" onclick="openEditAmount('${t.id}')" style="cursor:pointer;flex-shrink:0">${inc?'+':'-'}¥${fmt(t.amount)}</div>
@@ -888,9 +888,10 @@ function triggerCSVImport(){
 async function triggerCSVExport(){const c=await csvHandler.exportAll();csvHandler.downloadCSV(c,`波妞记账_${today()}.csv`);showToast('导出成功');}
 
 async function showCatManagement(){
+  hideAllPages();
   state.catMgmtType='expense';$('page-cat-mgmt').classList.add('active');document.querySelector('.tab-bar').style.display='none';renderCatMgmt();
 }
-function closeCatManagement(){$('page-cat-mgmt').classList.remove('active');document.querySelector('.tab-bar').style.display='flex';switchTab('profile');}
+function closeCatManagement(){hideAllPages();$('page-profile').classList.add('active');document.querySelector('.tab-bar').style.display='flex';}
 function switchCatMgmtType(t){state.catMgmtType=t;document.querySelectorAll('#cat-mgmt-segment button').forEach(b=>{const a=b.dataset.type===t;b.classList.toggle('active',a);b.classList.toggle('income',a&&t==='income');});renderCatMgmt();}
 async function renderCatMgmt(){
   const type=state.catMgmtType,cat1List=catManager.getCat1List(type);

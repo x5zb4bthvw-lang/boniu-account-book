@@ -78,7 +78,8 @@ class CSVHandler {
       const date = map.dateIdx >= 0 ? this._parseDate(cols[map.dateIdx]?.trim()) : new Date().toISOString().split('T')[0];
       const note = map.noteIdx >= 0 ? cols[map.noteIdx]?.trim() || '' : '';
 
-      txns.push({ type, amount, category1: cat1, category2: cat2, date, note });
+      const tag=(cat2&&cat2!=='自定义'&&cat2!=='无标签')?cat2:null;
+      txns.push({ type, amount, category1: cat1, category2: cat2||'无标签', tag, date, note });
       imported++;
     }
 
