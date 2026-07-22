@@ -127,46 +127,73 @@
       <!-- 第一步：分类选择 -->
       <div class="sheet-page active" id="sheet-step1">
         <div class="sheet-handle"></div>
-        <div class="sheet-segment" id="sheet-segment">
-          <button class="expense active" data-type="expense" onclick="sheetSwitchType('expense')">支出</button>
-          <button class="income" data-type="income" onclick="sheetSwitchType('income')">收入</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 0">
+          <div class="sheet-segment" style="padding:0;flex:1;justify-content:center">
+            <button class="expense active" data-type="expense" onclick="sheetSwitchType('expense')">支出</button>
+            <button class="income" data-type="income" onclick="sheetSwitchType('income')">收入</button>
+          </div>
+          <button style="font-size:15px;color:var(--text-secondary);background:none;border:none;padding:8px;cursor:pointer;flex-shrink:0" onclick="closeSheet()">取消</button>
         </div>
         <div class="cat-grid" id="sheet-cat-grid"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 20px;font-size:13px;color:var(--text-secondary);border-top:1px solid var(--divider)">
+          <span id="sheet-other-total"></span>
+          <button style="color:var(--primary);background:none;border:none;font-size:13px;cursor:pointer" onclick="closeSheet();showCatManagement()">设置</button>
+        </div>
       </div>
 
-      <!-- 第二步：金额输入 -->
+      <!-- 第二步：金额 + 备注 + 标签 + 数字键盘 -->
       <div class="sheet-page" id="sheet-step2">
-        <div class="step2-top">
-          <button class="step2-back" onclick="sheetBackToStep1()">←</button>
-          <span class="step2-cat" id="step2-cat-label"></span>
-          <div style="width:36px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px">
+          <button style="font-size:20px;background:none;border:none;cursor:pointer;color:var(--text);padding:4px 8px" onclick="sheetBackToStep1()">←</button>
+          <span style="font-size:17px;font-weight:600" id="step2-cat-label"></span>
+          <button style="font-size:15px;font-weight:600;color:var(--primary);background:none;border:none;padding:4px 8px;cursor:pointer" onclick="sheetComplete()">完成</button>
         </div>
-        <div class="amount-display" id="step2-amount">¥<span class="currency">0</span></div>
-        <div class="num-pad">
-          <div class="num-row"><button class="num-key" onclick="nk('1')">1</button><button class="num-key" onclick="nk('2')">2</button><button class="num-key" onclick="nk('3')">3</button></div>
-          <div class="num-row"><button class="num-key" onclick="nk('4')">4</button><button class="num-key" onclick="nk('5')">5</button><button class="num-key" onclick="nk('6')">6</button></div>
+
+        <div class="amount-display" id="step2-amount">¥<span class="currency">0.00</span></div>
+
+        <!-- 备注输入 -->
+        <div style="padding:0 20px 8px">
+          <input id="step2-note" placeholder="点击填写备注" style="width:100%;padding:10px 14px;border:1px solid var(--divider);border-radius:10px;font-size:15px;text-align:center;outline:none;background:#fff" onfocus="onNoteFocus()" oninput="onNoteInput()">
+        </div>
+
+        <!-- 标签区 -->
+        <div style="padding:0 20px 6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:13px;color:var(--text-secondary)">❓ 该类别下的标签？</span>
+            <button style="font-size:16px;background:none;border:none;cursor:pointer;color:var(--text-secondary)" onclick="openTagManager()">⚙️</button>
+          </div>
+          <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 0;flex-wrap:wrap;align-items:center" id="step2-tags"></div>
+        </div>
+
+        <!-- 自定义数字键盘 -->
+        <div class="num-pad" style="margin-top:auto">
           <div class="num-row"><button class="num-key" onclick="nk('7')">7</button><button class="num-key" onclick="nk('8')">8</button><button class="num-key" onclick="nk('9')">9</button></div>
-          <div class="num-row"><button class="num-key today" onclick="nk('today')">今天</button><button class="num-key" onclick="nk('0')">0</button><button class="num-key" onclick="nk('.')">.</button></div>
-          <div class="num-row"><button class="num-key done" onclick="sheetGoToStep3()">下一步</button><button class="num-key" onclick="nk('⌫')" style="font-size:18px">⌫</button></div>
+          <div class="num-row"><button class="num-key" onclick="nk('4')">4</button><button class="num-key" onclick="nk('5')">5</button><button class="num-key" onclick="nk('6')">6</button></div>
+          <div class="num-row"><button class="num-key" onclick="nk('1')">1</button><button class="num-key" onclick="nk('2')">2</button><button class="num-key" onclick="nk('3')">3</button></div>
+          <div class="num-row"><button class="num-key" onclick="nk('.')">.</button><button class="num-key" onclick="nk('0')">0</button><button class="num-key" onclick="nk('⌫')" style="font-size:18px">⌫</button></div>
         </div>
       </div>
 
-      <!-- 第三步：标签 + 完成 -->
-      <div class="sheet-page" id="sheet-step3">
-        <div class="step3-top">
-          <button class="step2-back" onclick="sheetBackToStep2()">←</button>
-          <span class="step3-title">添加标签</span>
-          <div style="width:36px"></div>
-        </div>
-        <div style="text-align:center;padding:8px;font-size:20px;font-weight:700" id="step3-cat-info"></div>
-        <div class="tag-scroll" id="step3-tags"></div>
-        <div class="tag-input-row hidden" id="step3-tag-input-row">
-          <input id="step3-tag-input" placeholder="输入新标签..."><button onclick="confirmStep3Tag()">添加</button>
-        </div>
-        <button class="step3-complete" onclick="sheetComplete()">✓ 完成</button>
+    </div>
+  </div>
+
+  <!-- ==================== 标签管理弹窗 ==================== -->
+  <div class="sheet-overlay hidden" id="overlay-tag-mgr" onclick="if(event.target===this)closeTagManager()">
+    <div class="sheet" style="max-height:60vh">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--divider)">
+        <span style="font-size:16px;font-weight:600">管理标签</span>
+        <button style="font-size:15px;color:var(--primary);background:none;border:none;cursor:pointer" onclick="closeTagManager()">完成</button>
+      </div>
+      <div style="font-size:14px;color:var(--text-secondary);padding:8px 16px" id="tag-mgr-cat-name"></div>
+      <div id="tag-mgr-list" style="padding:0 16px;overflow-y:auto;max-height:40vh"></div>
+      <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--divider)">
+        <input id="tag-mgr-input" placeholder="输入新标签名" style="flex:1;padding:10px 14px;border:1px solid var(--divider);border-radius:10px;font-size:14px;outline:none">
+        <button style="padding:10px 18px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:14px;cursor:pointer;white-space:nowrap" onclick="addTagFromMgr()">添加</button>
       </div>
     </div>
   </div>
+
+  <!-- ==================== 旧的底部记账抽屉结束（替换完成） ==================== -->
 
   <!-- ==================== 交易详情 ==================== -->
   <div class="page" id="page-txn-detail">

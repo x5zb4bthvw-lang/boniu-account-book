@@ -265,4 +265,21 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .btn-sm { padding: 6px 14px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: 12px; cursor: pointer; }
 
 .btn-sm:active { opacity: .85; }
-/* (FAB 已合并到 TabBar 中央按钮，不再需要独立 FAB) */
+
+/* 标签 Chip（第二步内联） */
+.tag-chip-inline { padding: 6px 14px; border-radius: 16px; font-size: 13px; cursor: pointer; border: 1px solid var(--divider); background: #fff; color: var(--text); white-space: nowrap; transition: .15s; flex-shrink: 0; }
+.tag-chip-inline:active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.tag-add-inline { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 1.5px dashed #ccc; background: #fff; color: var(--text-secondary); font-size: 18px; cursor: pointer; flex-shrink: 0; }
+
+/* 标签管理弹窗 */
+.tag-mgr-item { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: .5px solid var(--divider); }
+.tag-mgr-item span { flex: 1; font-size: 14px; }
+.tag-mgr-item button { font-size: 13px; color: #d32f2f; background: none; border: none; cursor: pointer; padding: 4px 8px; }
+
+/* 标签 Chip（旧） */
+.tag-chip { padding: 8px 18px; border-radius: 20px; font-size: 14px; cursor: pointer; border: 1px solid var(--divider); background: #fff; color: var(--text); white-space: nowrap; transition: .15s; }
+.tag-chip.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* TabBar 始终固定 + 页面底部留白 */
+.tab-bar { position: fixed; }
+.page { padding-bottom: calc(72px + var(--safe-bottom) + 16px); }

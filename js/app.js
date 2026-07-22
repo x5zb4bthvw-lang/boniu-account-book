@@ -57,14 +57,16 @@ function switchTab(tab) {
 }
 
 // ============================================================
-//  FAB → 打开底部 Sheet
+//  FAB → 打开底部 Sheet（两步流程）
 // ============================================================
 function openSheet() {
   state.sheetType='expense'; state.sheetCat1=''; state.sheetTag=''; state.sheetAmount=0; state.sheetInput='';
   state.sheetDate=today(); state.editingTxnId=null;
+  $('step2-note').value='';
   updateSheetSegment();
   renderSheetCatGrid();
-  $('sheet-step1').classList.add('active'); $('sheet-step2').classList.remove('active'); $('sheet-step3').classList.remove('active');
+  updateSheetOtherTotal();
+  $('sheet-step1').classList.add('active'); $('sheet-step2').classList.remove('active');
   $('sheet-overlay').classList.remove('hidden');
 }
 function closeSheet() { $('sheet-overlay').classList.add('hidden'); }
@@ -73,6 +75,7 @@ function sheetSwitchType(type) {
   state.sheetType=type; state.sheetCat1='';
   updateSheetSegment();
   renderSheetCatGrid();
+  updateSheetOtherTotal();
 }
 function updateSheetSegment() {
   document.querySelectorAll('#sheet-segment button').forEach(b=>{
@@ -85,27 +88,31 @@ function renderSheetCatGrid() {
   const cats=catManager.getCat1List(state.sheetType);
   $('sheet-cat-grid').innerHTML=cats.map(c=>`<button class="cat-grid-item" onclick="sheetSelectCat('${c}')"><div class="cat-grid-emoji">${catManager.getIcon(c)}</div><div class="cat-grid-name">${c}</div></button>`).join('');
 }
+async function updateSheetOtherTotal() {
+  const {start,end}=monthRange(new Date());
+  const sum=await db.getSum(state.sheetType,start,end);
+  $('sheet-other-total').textContent=`本月${state.sheetType==='expense'?'支出':'收入'}总计：¥${fmt(sum)}`;
+}
 
-// ---- 第二步 ----
-function sheetSelectCat(cat1) {
+// ---- 第二步：金额 + 备注 + 标签 + 数字键盘 ----
+async function sheetSelectCat(cat1) {
   state.sheetCat1=cat1; state.sheetInput=''; state.sheetAmount=0; state.sheetTag='';
+  $('step2-note').value='';
   $('sheet-step1').classList.remove('active');
   $('sheet-step2').classList.add('active');
   $('step2-cat-label').textContent=catManager.getIcon(cat1)+' '+cat1;
-  $('step2-amount').innerHTML='¥<span class="currency">0</span>';
+  $('step2-amount').innerHTML='¥<span class="currency">0.00</span>';
+  await renderStep2Tags();
 }
 function sheetBackToStep1() {
   $('sheet-step2').classList.remove('active');
   $('sheet-step1').classList.add('active');
+  updateSheetOtherTotal();
 }
 
-// 自定义数字键盘
+// 自定义数字键盘（禁止系统键盘）
 function nk(key) {
   if(key==='⌫') { state.sheetInput=state.sheetInput.slice(0,-1); }
-  else if(key==='today') {
-    state.sheetDate=today(); showToast('日期已设为今天');
-    return;
-  }
   else if(key==='.') {
     if(!state.sheetInput) state.sheetInput='0.';
     else if(!state.sheetInput.includes('.')) state.sheetInput+='.';
@@ -116,51 +123,89 @@ function nk(key) {
     else state.sheetInput+=key;
   }
   state.sheetAmount=parseFloat(state.sheetInput)||0;
-  $('step2-amount').innerHTML='¥<span class="currency">'+(state.sheetInput||'0')+'</span>';
+  $('step2-amount').innerHTML='¥<span class="currency">'+(state.sheetInput||'0.00')+'</span>';
 }
 
-// ---- 第三步 ----
-async function sheetGoToStep3() {
-  if(!state.sheetAmount) { showToast('请输入金额'); return; }
-  $('sheet-step2').classList.remove('active');
-  $('sheet-step3').classList.add('active');
-  $('step3-cat-info').textContent=catManager.getIcon(state.sheetCat1)+' '+state.sheetCat1+' · ¥'+fmt(state.sheetAmount);
-  await renderStep3Tags();
-}
-function sheetBackToStep2() {
-  $('sheet-step3').classList.remove('active');
-  $('sheet-step2').classList.add('active');
-}
-
-async function renderStep3Tags() {
+// ---- 标签区 ----
+async function renderStep2Tags() {
   const tags=await catManager.getAllCat2List(state.sheetCat1, state.sheetType);
-  let html=`<button class="tag-chip ${state.sheetTag===''?'selected':''}" onclick="pickSheetTag('')">无标签</button>`;
-  tags.forEach(t=>{ html+=`<button class="tag-chip ${state.sheetTag===t?'selected':''}" onclick="pickSheetTag('${t}')">#${t}</button>`; });
-  html+=`<button class="tag-add-btn" onclick="showStep3TagInput()">+</button>`;
-  $('step3-tags').innerHTML=html;
-  $('step3-tag-input-row').classList.add('hidden');
-}
-function pickSheetTag(tag) { state.sheetTag=tag; renderStep3Tags(); }
-function showStep3TagInput() { $('step3-tag-input-row').classList.remove('hidden'); $('step3-tag-input').value=''; setTimeout(()=>$('step3-tag-input').focus(),100); }
-async function confirmStep3Tag() {
-  const v=$('step3-tag-input').value.trim(); if(!v) return;
-  await catManager.addCat2(state.sheetCat1, v, state.sheetType);
-  state.sheetTag=v; renderStep3Tags();
+  let html='';
+  tags.forEach(t=>{ html+=`<button class="tag-chip-inline" onclick="pickTag('${t}')">#${t}</button>`; });
+  html+=`<button class="tag-add-inline" onclick="addTagInline()">+</button>`;
+  $('step2-tags').innerHTML=html;
 }
 
+function pickTag(tag) {
+  state.sheetTag=tag;
+  $('step2-note').value='#'+tag;
+  renderStep2Tags();
+}
+
+async function addTagInline() {
+  const name=prompt('输入新标签名称');
+  if(!name||!name.trim()) return;
+  await catManager.addCat2(state.sheetCat1, name.trim(), state.sheetType);
+  state.sheetTag=name.trim();
+  $('step2-note').value='#'+name.trim();
+  renderStep2Tags();
+  refreshTagMgrIfOpen();
+}
+
+// 备注输入
+function onNoteFocus() {}
+function onNoteInput() {
+  const v=$('step2-note').value;
+  if(v.startsWith('#')) {
+    const tag=v.slice(1).split(' ')[0];
+    if(tag) state.sheetTag=tag;
+  }
+}
+
+// ---- 标签管理弹窗 ----
+async function openTagManager() {
+  $('overlay-tag-mgr').classList.remove('hidden');
+  $('tag-mgr-cat-name').textContent=catManager.getIcon(state.sheetCat1)+' '+state.sheetCat1;
+  await refreshTagMgr();
+}
+function closeTagManager() { $('overlay-tag-mgr').classList.add('hidden'); }
+async function refreshTagMgr() {
+  const tags=await catManager.getAllCat2List(state.sheetCat1, state.sheetType);
+  $('tag-mgr-list').innerHTML=tags.length?tags.map(t=>`<div class="tag-mgr-item"><span>🏷️ ${t}</span><button onclick="deleteTagMgr('${t}')">删除</button></div>`).join(''):'<div style="font-size:13px;color:var(--text-secondary);padding:12px 0">暂无标签</div>';
+}
+async function refreshTagMgrIfOpen() {
+  if(!$('overlay-tag-mgr').classList.contains('hidden')) await refreshTagMgr();
+}
+async function deleteTagMgr(tag) {
+  const cats=await catManager.getCustomCategories(state.sheetType);
+  const found=cats.find(c=>c.parentName===state.sheetCat1&&c.name===tag);
+  if(found) await catManager.deleteCat(found.id);
+  if(state.sheetTag===tag) { state.sheetTag=''; $('step2-note').value=''; }
+  refreshTagMgr(); renderStep2Tags();
+}
+async function addTagFromMgr() {
+  const v=$('tag-mgr-input').value.trim(); if(!v) return;
+  await catManager.addCat2(state.sheetCat1, v, state.sheetType);
+  $('tag-mgr-input').value='';
+  refreshTagMgr(); renderStep2Tags();
+}
+
+// ---- 保存 ----
 async function sheetComplete() {
+  if(!state.sheetAmount) return;
+  const noteVal=$('step2-note').value.trim();
   const txn={
     id: state.editingTxnId||crypto.randomUUID(),
     type: state.sheetType, amount: state.sheetAmount,
     category1: state.sheetCat1,
     category2: state.sheetTag||'自定义',
     tag: state.sheetTag||null,
-    date: state.sheetDate, note: null,
+    date: state.sheetDate,
+    note: noteVal||null,
     createdAt: new Date().toISOString(),
   };
   if(state.editingTxnId) await db.updateTransaction(txn);
   else await db.addTransaction(txn);
-  showToast('保存成功 ✅');
+  showToast('保存成功');
   closeSheet();
   switchTab('transactions');
 }
@@ -172,8 +217,8 @@ async function renderHome() {
   const {start,end}=monthRange(state.currentMonth);
   updateMonthTitle();
   const [income,expense,all]=await Promise.all([db.getSum('income',start,end),db.getSum('expense',start,end),db.getTransactions({startDate:start,endDate:end,limit:300})]);
-  $('home-income').textContent='¥'+fmtInt(income);
-  $('home-expense').textContent='¥'+fmtInt(expense);
+  $('home-income').textContent='¥'+fmt(income);
+  $('home-expense').textContent='¥'+fmt(expense);
   $('home-next-arrow').style.visibility=monthKey(state.currentMonth)>=monthKey(new Date())?'hidden':'visible';
 
   const groups=groupByDay(all);
@@ -183,7 +228,7 @@ async function renderHome() {
     e.classList.add('hidden');
     c.innerHTML=groups.map(g=>{
       const expSum=g.txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-      return`<div class="day-group"><div class="day-header"><span><span class="day-date">${dl(g.date)}</span><span class="day-weekday">${wd(g.date)}</span></span><span class="day-exp">${expSum>0?`<span class="amt">¥${fmtInt(expSum)}</span>`:'¥0'}</span></div><div class="day-body">${g.txns.map(t=>txnRowHTML(t)).join('')}</div></div>`;
+      return`<div class="day-group"><div class="day-header"><span><span class="day-date">${dl(g.date)}</span><span class="day-weekday">${wd(g.date)}</span></span><span class="day-exp">${expSum>0?`<span class="amt">¥${fmt(expSum)}</span>`:'¥0.00'}</span></div><div class="day-body">${g.txns.map(t=>txnRowHTML(t)).join('')}</div></div>`;
     }).join('');
   }
 }
@@ -351,9 +396,9 @@ async function renderAssets(){
   const accounts=await db.getAccounts();
   let ta=0,tl=0;
   accounts.forEach(a=>{if(a.type==='liability')tl+=a.balance;else if(a.balance<0)tl+=Math.abs(a.balance);else ta+=a.balance;});
-  $('asset-total-assets').textContent='¥'+fmtInt(ta);
-  $('asset-total-liabilities').textContent='¥'+fmtInt(tl);
-  $('asset-networth').textContent='¥'+fmtInt(ta-tl);
+  $('asset-total-assets').textContent='¥'+fmt(ta);
+  $('asset-total-liabilities').textContent='¥'+fmt(tl);
+  $('asset-networth').textContent='¥'+fmt(ta-tl);
   const types=['cash','savingsCard','creditCard','virtualAccount','liability','custom'];
   const names={cash:'💵 现金',savingsCard:'🏦 储蓄卡',creditCard:'💳 信用卡',virtualAccount:'📱 虚拟账户',liability:'📉 负债',custom:'✨ 自定义'};
   let h='';
