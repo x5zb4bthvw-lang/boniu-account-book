@@ -89,11 +89,8 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 
 /* ============ 第一步：分类网格 ============ */
 .sheet-segment { display: flex; padding: 12px 40px 8px; gap: 0; }
-/* 支出/收入按钮间距 */
+/* 支出/收入按钮间距（仅第一步） */
 #sheet-step1 .sheet-segment button { margin: 0 8px; padding: 8px 24px; }
-#step2-segment button { margin: 0 8px; padding: 6px 22px; }
-#step2-segment button.active.expense { color: var(--primary) !important; border-bottom-color: var(--primary) !important; font-weight: 700 !important; }
-#step2-segment button.active.income { color: var(--income) !important; border-bottom-color: var(--income) !important; font-weight: 700 !important; }
 
 /* sheet-step2 占满高度 */
 #sheet-step2 { display: flex; flex-direction: column; height: 100%; overflow: hidden; }

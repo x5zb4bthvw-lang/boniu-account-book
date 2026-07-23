@@ -73,10 +73,6 @@ function openSheet() {
   updateSheetSegment();
   renderSheetCatGrid();
   updateSheetOtherTotal();
-  // 同时更新 step2 的 segment 状态
-  document.querySelectorAll('#step2-segment button').forEach(b=>{
-    b.classList.toggle('active',b.dataset.type===state.sheetType);
-  });
   $('sheet-step1').classList.add('active'); $('sheet-step2').classList.remove('active');
   $('sheet-overlay').classList.remove('hidden');
 }
@@ -87,10 +83,6 @@ function sheetSwitchType(type) {
   updateSheetSegment();
   renderSheetCatGrid();
   updateSheetOtherTotal();
-  // 同步 step2 segment
-  document.querySelectorAll('#step2-segment button').forEach(b=>{
-    b.classList.toggle('active',b.dataset.type===type);
-  });
 }
 function updateSheetSegment() {
   document.querySelectorAll('#sheet-segment button').forEach(b=>{
@@ -109,12 +101,7 @@ async function updateSheetOtherTotal() {
   $('sheet-other-total').textContent=`本月${state.sheetType==='expense'?'支出':'收入'}总计：¥${fmt(sum)}`;
 }
 
-// ---- 第二步：金额推移 + 新键盘 ----
-function step2SwitchType(type){
-  state.sheetType=type;
-  step2UpdateSegment();
-  renderStep2CatGrid();
-}
+// ---- 第二步：金额输入 ----
 function sheetSelectCat(cat1){
   state.sheetCat1=cat1; state.sheetTag=''; state.amountStr=''; state.sheetAmount=0;
   // 根据科目类型自动切换 segment
@@ -123,20 +110,9 @@ function sheetSelectCat(cat1){
   $('step2-note').value='';
   $('sheet-step1').classList.remove('active');
   $('sheet-step2').classList.add('active');
-  // 立即更新 segment 后再渲染
-  step2UpdateSegment();
   renderStep2CatGrid();
   updateAmountDisplay();
   renderStep2Tags();
-}
-function step2UpdateSegment(){
-  document.querySelectorAll('#step2-segment button').forEach(b=>{
-    const isActive=b.dataset.type===state.sheetType;
-    b.classList.toggle('active',isActive);
-    b.style.color=isActive?'#2E7D32':'#8E8E93';
-    b.style.borderBottomColor=isActive?'#2E7D32':'transparent';
-    b.style.fontWeight=isActive?'700':'500';
-  });
 }
 function renderStep2CatGrid(){
   const cats=catManager.getCat1List(state.sheetType);

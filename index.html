@@ -305,22 +305,14 @@
         </div>
       </div>
 
-      <!-- 第二步：金额输入（紧凑布局，键盘填满底部） -->
+      <!-- 第二步：金额输入（无重复切换栏） -->
       <div class="sheet-page" id="sheet-step2">
-        <!-- 顶栏 -->
         <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;flex-shrink:0">
           <button style="font-size:15px;color:var(--text-secondary);background:none;border:none;cursor:pointer;padding:6px 8px" onclick="closeSheet()">取消</button>
-          <div style="display:flex;gap:0" id="step2-segment">
-            <button style="padding:5px 18px;font-size:15px;font-weight:500;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;cursor:pointer" class="active expense" data-type="expense" onclick="step2SwitchType('expense')">支出</button>
-            <button style="padding:5px 18px;font-size:15px;font-weight:500;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;cursor:pointer" class="income" data-type="income" onclick="step2SwitchType('income')">收入</button>
-          </div>
           <button style="font-size:15px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;padding:6px 8px" onclick="sheetComplete()">完成</button>
         </div>
-        <!-- 科目网格 4列2行 -->
-        <div class="cat-grid" id="step2-cat-grid" style="padding:2px 16px;overflow-y:auto;max-height:16vh;gap:4px;flex-shrink:0"></div>
-        <!-- 金额 compact -->
-        <div style="text-align:right;padding:2px 24px;font-size:clamp(28px,6vw,34px);font-weight:600;flex-shrink:0;line-height:1.2" id="step2-amount">¥<span>0.00</span></div>
-        <!-- 备注 + 功能栏 -->
+        <div class="cat-grid" id="step2-cat-grid" style="padding:2px 16px;overflow-y:auto;max-height:15vh;gap:4px;flex-shrink:0"></div>
+        <div style="text-align:right;padding:2px 24px;font-size:clamp(32px,6vw,40px);font-weight:600;flex-shrink:0;line-height:1.2" id="step2-amount">¥<span>0.00</span></div>
         <div style="padding:0 16px;flex-shrink:0">
           <input id="step2-note" placeholder="备注：点击填写备注" style="width:100%;padding:7px 12px;border:1px solid var(--divider);border-radius:10px;font-size:14px;outline:none;background:#fff;text-align:center">
           <div style="display:flex;align-items:center;gap:4px;padding:3px 0">
@@ -328,8 +320,7 @@
             <div style="display:flex;gap:4px;overflow-x:auto" id="step2-tags"></div>
           </div>
         </div>
-        <!-- 键盘 flex填满 -->
-        <div class="num-pad" style="flex:1;min-height:0">
+        <div class="num-pad" style="flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)">
           <div class="num-row"><button class="num-key" onclick="nk('7')">7</button><button class="num-key" onclick="nk('8')">8</button><button class="num-key" onclick="nk('9')">9</button></div>
           <div class="num-row"><button class="num-key" onclick="nk('4')">4</button><button class="num-key" onclick="nk('5')">5</button><button class="num-key" onclick="nk('6')">6</button></div>
           <div class="num-row"><button class="num-key" onclick="nk('1')">1</button><button class="num-key" onclick="nk('2')">2</button><button class="num-key" onclick="nk('3')">3</button></div>
