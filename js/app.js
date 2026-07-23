@@ -67,12 +67,17 @@ function switchTab(tab) {
 //  FAB → 打开底部 Sheet（两步流程）
 // ============================================================
 function openSheet() {
-  state.sheetType='expense'; state.sheetCat1=''; state.sheetTag=''; state.sheetAmount=0; state.sheetInput='';
+  state.sheetType='expense'; state.sheetCat1=''; state.sheetTag=''; state.sheetAmount=0;
+  state._digits=[]; state._isNegative=false;
   state.sheetDate=today(); state.editingTxnId=null;
   $('step2-note').value='';
   updateSheetSegment();
   renderSheetCatGrid();
   updateSheetOtherTotal();
+  // 同时更新 step2 的 segment 状态
+  document.querySelectorAll('#step2-segment button').forEach(b=>{
+    b.classList.toggle('active',b.dataset.type===state.sheetType);
+  });
   $('sheet-step1').classList.add('active'); $('sheet-step2').classList.remove('active');
   $('sheet-overlay').classList.remove('hidden');
 }
@@ -83,6 +88,10 @@ function sheetSwitchType(type) {
   updateSheetSegment();
   renderSheetCatGrid();
   updateSheetOtherTotal();
+  // 同步 step2 segment
+  document.querySelectorAll('#step2-segment button').forEach(b=>{
+    b.classList.toggle('active',b.dataset.type===type);
+  });
 }
 function updateSheetSegment() {
   document.querySelectorAll('#sheet-segment button').forEach(b=>{
@@ -101,71 +110,77 @@ async function updateSheetOtherTotal() {
   $('sheet-other-total').textContent=`本月${state.sheetType==='expense'?'支出':'收入'}总计：¥${fmt(sum)}`;
 }
 
-// ---- 第二步：金额 + 备注 + 标签 + 数字键盘 ----
-async function sheetSelectCat(cat1) {
-  state.sheetCat1=cat1; state.sheetInput=''; state.sheetAmount=0; state.sheetTag='';
+// ---- 第二步：金额推移 + 新键盘 ----
+function step2SwitchType(type){
+  state.sheetType=type;
+  document.querySelectorAll('#step2-segment button').forEach(b=>{
+    b.classList.toggle('active',b.dataset.type===type);
+  });
+  renderStep2CatGrid();
+}
+function sheetSelectCat(cat1){
+  state.sheetCat1=cat1; state.sheetTag=''; state._digits=[];
   $('step2-note').value='';
   $('sheet-step1').classList.remove('active');
   $('sheet-step2').classList.add('active');
-  $('step2-cat-label').textContent=catManager.getIcon(cat1)+' '+cat1;
-  $('step2-amount').innerHTML='¥<span class="currency">0.00</span>';
-  await renderStep2Tags();
+  renderStep2CatGrid();
+  updateAmountDisplay();
+  renderStep2Tags();
 }
-function sheetBackToStep1() {
+function renderStep2CatGrid(){
+  const cats=catManager.getCat1List(state.sheetType);
+  const el=$('step2-cat-grid');
+  if(!el) return;
+  el.innerHTML=cats.map(c=>{
+    const sel=state.sheetCat1===c;
+    return`<button class="cat-grid-item" style="${sel?'background:var(--primary-light);outline:2px solid var(--primary)':''}" onclick="sheetSelectCat('${c}')"><div class="cat-grid-emoji">${catManager.getIcon(c)}</div><div class="cat-grid-name">${c}</div></button>`;
+  }).join('');
+}
+function sheetBackToStep1(){
   $('sheet-step2').classList.remove('active');
   $('sheet-step1').classList.add('active');
   updateSheetOtherTotal();
 }
 
-// 自定义数字键盘（禁止系统键盘）
-function nk(key) {
-  if(key==='⌫') { state.sheetInput=state.sheetInput.slice(0,-1); }
-  else if(key==='.') {
-    if(!state.sheetInput) state.sheetInput='0.';
-    else if(!state.sheetInput.includes('.')) state.sheetInput+='.';
+// 金额推移逻辑（输入1→0.01, 12→0.12, 123→1.23）
+state._digits=[];
+function nk(key){
+  if(key==='⌫'){ state._digits.pop(); }
+  else if(key==='.'){
+    // 忽略小数点，金额始终保留2位小数
   }
   else {
-    if(state.sheetInput==='0'&&key!=='0') state.sheetInput=key;
-    else if(state.sheetInput==='0'&&key==='0') {}
-    else state.sheetInput+=key;
+    if(state._digits.length>=10) return; // 最多10位
+    state._digits.push(key);
   }
-  state.sheetAmount=parseFloat(state.sheetInput)||0;
-  $('step2-amount').innerHTML='¥<span class="currency">'+(state.sheetInput||'0.00')+'</span>';
+  updateAmountDisplay();
+}
+function updateAmountDisplay(){
+  const d=[...state._digits];
+  while(d.length<2) d.unshift('0');
+  const intPart=d.slice(0,-2).join('')||'0';
+  const decPart=d.slice(-2).join('');
+  state.sheetAmount=parseFloat(intPart+'.'+decPart)||0;
+  const sign=state._isNegative?'-':'';
+  $('step2-amount').innerHTML='¥<span>'+sign+intPart+'.'+decPart+'</span>';
+}
+function toggleSign(){
+  state._isNegative=!state._isNegative;
+  updateAmountDisplay();
 }
 
-// ---- 标签区 ----
-async function renderStep2Tags() {
-  const tags=await catManager.getAllCat2List(state.sheetCat1, state.sheetType);
-  let html='';
-  tags.forEach(t=>{ html+=`<button class="tag-chip-inline" onclick="pickTag('${t}')">#${t}</button>`; });
-  html+=`<button class="tag-add-inline" onclick="addTagInline()">+</button>`;
-  $('step2-tags').innerHTML=html;
+// 标签区
+async function renderStep2Tags(){
+  const tags=await catManager.getAllCat2List(state.sheetCat1,state.sheetType);
+  let h=tags.map(t=>`<button class="tag-chip-inline" onclick="pickTag('${t}')">#${t}</button>`).join('');
+  h+=`<button class="tag-add-inline" onclick="addTagInline()">+</button>`;
+  const el=$('step2-tags'); if(el) el.innerHTML=h;
 }
-
-function pickTag(tag) {
-  state.sheetTag=tag;
-  $('step2-note').value='#'+tag;
-  renderStep2Tags();
-}
-
-async function addTagInline() {
-  const name=prompt('输入新标签名称');
-  if(!name||!name.trim()) return;
-  await catManager.addCat2(state.sheetCat1, name.trim(), state.sheetType);
-  state.sheetTag=name.trim();
-  $('step2-note').value='#'+name.trim();
-  renderStep2Tags();
-  refreshTagMgrIfOpen();
-}
-
-// 备注输入
-function onNoteFocus() {}
-function onNoteInput() {
-  const v=$('step2-note').value;
-  if(v.startsWith('#')) {
-    const tag=v.slice(1).split(' ')[0];
-    if(tag) state.sheetTag=tag;
-  }
+function pickTag(tag){ state.sheetTag=tag; $('step2-note').value='#'+tag; renderStep2Tags(); }
+async function addTagInline(){
+  const n=prompt('输入新标签名称'); if(!n||!n.trim()) return;
+  await catManager.addCat2(state.sheetCat1,n.trim(),state.sheetType);
+  state.sheetTag=n.trim(); $('step2-note').value='#'+n.trim(); renderStep2Tags();
 }
 
 // ---- 标签管理弹窗 ----
