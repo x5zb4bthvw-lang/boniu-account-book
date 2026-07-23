@@ -7,8 +7,7 @@ const state = {
   // 记账 Sheet
   sheetType: 'expense', sheetCat1: '', sheetTag: '', sheetAmount: 0, sheetInput: '',
   sheetDate: '', editingTxnId: null,
-  // 图表
-  statsType: 'expense', statsPeriod: 'month', statsDate: new Date(),
+  // 图表（period/cursor 由 _initStats 初始化）
   // 搜索
   searchText: '', searchType: null,
   searchStartDate: new Date(new Date().setMonth(new Date().getMonth()-3)).toISOString().split('T')[0],
@@ -351,17 +350,17 @@ function _periodTitle(period,cursor){
 // ============================================================
 async function renderStats(){ await refreshStatsOverview(); }
 function switchStatsPeriod(p){
-  state.statsPeriod=p; state.statsCursor=new Date();
+  state.period=p; state.cursor=new Date();
   document.querySelectorAll('#stats-period-bar button').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
   refreshStatsOverview();
 }
 function statsNav(dir){
-  const p=state.statsPeriod, c=new Date(state.statsCursor);
+  const p=state.period, c=new Date(state.cursor);
   if(p==='week') c.setDate(c.getDate()+dir*7);
   else if(p==='month') c.setMonth(c.getMonth()+dir);
   else c.setFullYear(c.getFullYear()+dir);
   const now=new Date(); if(c>now&&dir>0) return;
-  state.statsCursor=c; refreshStatsOverview();
+  state.cursor=c; refreshStatsOverview();
 }
 
 async function refreshStatsOverview(){

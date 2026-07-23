@@ -87,8 +87,8 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 /* ============ 第一步：分类网格 ============ */
 .sheet-segment { display: flex; padding: 12px 40px 8px; gap: 0; }
 .sheet-segment button { flex: 1; padding: 8px 0; text-align: center; font-size: 15px; font-weight: 500; border: none; background: none; color: var(--text-secondary); border-bottom: 2px solid transparent; cursor: pointer; transition: .15s; }
-.sheet-segment button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
-.sheet-segment button.income.active { color: var(--income); border-bottom-color: var(--income); }
+.sheet-segment button.active.expense { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+.sheet-segment button.active.income { color: var(--income); border-bottom-color: var(--income); font-weight: 700; }
 .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px 16px; overflow-y: auto; flex: 1; }
 .cat-grid-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 10px; cursor: pointer; border: none; background: #fff; transition: .15s; }
 .cat-grid-item:active { background: var(--bg); }
@@ -105,12 +105,8 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 /* 数字键盘 */
 .num-pad { background: #F2F2F2; margin-top: auto; }
 .num-row { display: flex; }
-.num-key { flex: 1; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600; cursor: pointer; border: none; background: #F2F2F2; color: var(--text); transition: .1s; }
+.num-key { flex: 1; height: 58px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; border: none; background: #F2F2F2; color: var(--text); transition: .1s; }
 .num-key:active { background: #ddd; }
-.num-key.done { font-size: 14px; color: #fff; background: var(--primary); font-weight: 700; }
-.num-key.done:active { background: var(--primary-dark); }
-.num-key.today { font-size: 12px; color: var(--text-secondary); background: #E8E8E8; font-weight: 500; }
-.num-key.today:active { background: #ddd; }
 
 /* ============ 第三步：标签页 ============ */
 .step3-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--divider); }
