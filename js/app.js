@@ -113,30 +113,30 @@ async function updateSheetOtherTotal() {
 // ---- 第二步：金额推移 + 新键盘 ----
 function step2SwitchType(type){
   state.sheetType=type;
-  document.querySelectorAll('#step2-segment button').forEach(b=>{
-    const isActive=b.dataset.type===type;
-    b.classList.toggle('active',isActive);
-    // 直接设置样式确保高亮
-    if(isActive){
-      b.style.color=type==='income'?'#2E7D32':'#2E7D32';
-      b.style.borderBottomColor=type==='income'?'#2E7D32':'#2E7D32';
-      b.style.fontWeight='700';
-    } else {
-      b.style.color='#8E8E93';
-      b.style.borderBottomColor='transparent';
-      b.style.fontWeight='500';
-    }
-  });
+  step2UpdateSegment();
   renderStep2CatGrid();
 }
 function sheetSelectCat(cat1){
   state.sheetCat1=cat1; state.sheetTag=''; state._digits=[];
+  // 根据科目类型自动切换 segment
+  if(catManager.isIncome(cat1)){ state.sheetType='income'; }
+  else { state.sheetType='expense'; }
+  step2UpdateSegment();
   $('step2-note').value='';
   $('sheet-step1').classList.remove('active');
   $('sheet-step2').classList.add('active');
   renderStep2CatGrid();
   updateAmountDisplay();
   renderStep2Tags();
+}
+function step2UpdateSegment(){
+  document.querySelectorAll('#step2-segment button').forEach(b=>{
+    const isActive=b.dataset.type===state.sheetType;
+    b.classList.toggle('active',isActive);
+    b.style.color=isActive?'#2E7D32':'#8E8E93';
+    b.style.borderBottomColor=isActive?'#2E7D32':'transparent';
+    b.style.fontWeight=isActive?'700':'500';
+  });
 }
 function renderStep2CatGrid(){
   const cats=catManager.getCat1List(state.sheetType);
