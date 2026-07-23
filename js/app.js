@@ -114,7 +114,18 @@ async function updateSheetOtherTotal() {
 function step2SwitchType(type){
   state.sheetType=type;
   document.querySelectorAll('#step2-segment button').forEach(b=>{
-    b.classList.toggle('active',b.dataset.type===type);
+    const isActive=b.dataset.type===type;
+    b.classList.toggle('active',isActive);
+    // 直接设置样式确保高亮
+    if(isActive){
+      b.style.color=type==='income'?'#2E7D32':'#2E7D32';
+      b.style.borderBottomColor=type==='income'?'#2E7D32':'#2E7D32';
+      b.style.fontWeight='700';
+    } else {
+      b.style.color='#8E8E93';
+      b.style.borderBottomColor='transparent';
+      b.style.fontWeight='500';
+    }
   });
   renderStep2CatGrid();
 }

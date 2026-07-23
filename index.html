@@ -305,39 +305,35 @@
         </div>
       </div>
 
-      <!-- 第二步：金额输入（推移逻辑+新键盘+功能栏） -->
+      <!-- 第二步：金额输入 -->
       <div class="sheet-page" id="sheet-step2">
         <!-- 顶部：取消 + 支出/收入 + 完成 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px">
-          <button style="font-size:16px;color:var(--text-secondary);background:none;border:none;cursor:pointer;padding:8px" onclick="closeSheet()">取消</button>
-          <div class="sheet-segment" style="padding:0;flex:0" id="step2-segment">
-            <button class="active expense" data-type="expense" onclick="step2SwitchType('expense')">支出</button>
-            <button class="income" data-type="income" onclick="step2SwitchType('income')">收入</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;flex-shrink:0">
+          <button style="font-size:15px;color:var(--text-secondary);background:none;border:none;cursor:pointer;padding:6px 8px" onclick="closeSheet()">取消</button>
+          <div style="display:flex;gap:0" id="step2-segment">
+            <button style="padding:6px 20px;font-size:15px;font-weight:500;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;cursor:pointer" class="active expense" data-type="expense" onclick="step2SwitchType('expense')">支出</button>
+            <button style="padding:6px 20px;font-size:15px;font-weight:500;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;cursor:pointer" class="income" data-type="income" onclick="step2SwitchType('income')">收入</button>
           </div>
-          <button style="font-size:15px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;padding:8px" onclick="sheetComplete()">完成</button>
+          <button style="font-size:15px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;padding:6px 8px" onclick="sheetComplete()">完成</button>
         </div>
-        <!-- 一级科目网格 -->
-        <div class="cat-grid" id="step2-cat-grid" style="padding:4px 16px 8px;overflow-y:auto;max-height:36vh"></div>
-        <!-- 金额显示 -->
-        <div class="amount-display" id="step2-amount" style="font-size:44px;font-weight:600;text-align:right;padding:4px 24px;min-height:48px">¥<span>0.00</span></div>
-        <!-- 备注 -->
-        <div style="padding:0 20px 4px">
-          <input id="step2-note" placeholder="备注：点击填写备注" style="width:100%;padding:10px 14px;border:1px solid var(--divider);border-radius:10px;font-size:15px;outline:none;background:#fff;text-align:center">
+        <!-- 科目网格（紧凑3行） -->
+        <div class="cat-grid" id="step2-cat-grid" style="padding:2px 16px 4px;overflow-y:auto;max-height:20vh;gap:6px;flex-shrink:0"></div>
+        <!-- 金额 -->
+        <div style="text-align:right;padding:2px 24px;font-size:30px;font-weight:600;flex-shrink:0" id="step2-amount">¥<span>0.00</span></div>
+        <!-- 备注 + 功能栏 -->
+        <div style="padding:0 16px 4px;flex-shrink:0">
+          <input id="step2-note" placeholder="备注：点击填写备注" style="width:100%;padding:8px 12px;border:1px solid var(--divider);border-radius:10px;font-size:14px;outline:none;background:#fff;text-align:center">
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 0;flex-wrap:wrap">
+            <button style="padding:4px 12px;border-radius:12px;border:1px solid var(--divider);background:#fff;font-size:12px;cursor:pointer" onclick="showDatePicker()">📅 <span id="step2-date-label">今天</span></button>
+            <div style="display:flex;gap:4px;overflow-x:auto;max-width:200px" id="step2-tags"></div>
+          </div>
         </div>
-        <!-- 功能栏：+/- + 标签 + 日期 -->
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 16px 8px;flex-wrap:wrap" id="step2-func-bar">
-          <button style="padding:6px 14px;border-radius:14px;border:1px solid var(--divider);background:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px" onclick="toggleSign()" id="step2-sign-btn">+/-</button>
-          <button style="padding:6px 14px;border-radius:14px;border:1px solid var(--divider);background:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px" onclick="showDatePicker()" id="step2-date-btn">📅 <span id="step2-date-label">今天</span></button>
-          <span id="step2-amount-sign" style="font-size:13px;color:var(--text-secondary)"></span>
-          <div style="flex:1"></div>
-          <div style="display:flex;gap:6px;overflow-x:auto;max-width:180px" id="step2-tags"></div>
-        </div>
-        <!-- 数字键盘 -->
-        <div class="num-pad" style="margin-top:auto">
+        <!-- 键盘固定在底部 -->
+        <div class="num-pad" style="flex-shrink:0">
           <div class="num-row"><button class="num-key" onclick="nk('7')">7</button><button class="num-key" onclick="nk('8')">8</button><button class="num-key" onclick="nk('9')">9</button></div>
           <div class="num-row"><button class="num-key" onclick="nk('4')">4</button><button class="num-key" onclick="nk('5')">5</button><button class="num-key" onclick="nk('6')">6</button></div>
           <div class="num-row"><button class="num-key" onclick="nk('1')">1</button><button class="num-key" onclick="nk('2')">2</button><button class="num-key" onclick="nk('3')">3</button></div>
-          <div class="num-row"><button class="num-key" onclick="nk('0')">0</button><button class="num-key" onclick="nk('.')">.</button><button class="num-key" onclick="nk('⌫')" style="font-size:20px">✕</button></div>
+          <div class="num-row"><button class="num-key" onclick="nk('0')">0</button><button class="num-key" onclick="nk('.')">.</button><button class="num-key" onclick="nk('⌫')">⌫</button></div>
         </div>
       </div>
 
