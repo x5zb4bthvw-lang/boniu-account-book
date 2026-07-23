@@ -5,6 +5,32 @@
 class ChartRenderer {
   constructor() { this.charts = {}; }
 
+  // 折线图（总支出 + 平均线）
+  renderLine(canvasId, labels, data, avg) {
+    this._destroy(canvasId);
+    const canvas=document.getElementById(canvasId); if(!canvas) return;
+    const ctx=canvas.getContext('2d');
+    const avgArr=new Array(labels.length).fill(avg);
+    // 让折线图可点击
+    const self=this;
+    this.charts[canvasId]=new Chart(ctx,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[
+          { label:'支出', data, borderColor:'#FF5722', backgroundColor:'rgba(255,87,34,0.05)', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'#FF5722' },
+          { label:'平均值', data:avgArr, borderColor:'#999', borderDash:[5,3], pointRadius:0, fill:false },
+        ],
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'¥'+v }, grid:{ color:'#f0f0f0' } }, x:{ grid:{ display:false } } },
+        onClick:(e,els)=>{ if(els.length){ const idx=els[0].index; if(typeof openDayDetail==='function') openDayDetail(idx); } },
+      },
+    });
+  }
+
   renderMainBar(canvasId, labels, data, type) {
     this._destroy(canvasId);
     const canvas = document.getElementById(canvasId);

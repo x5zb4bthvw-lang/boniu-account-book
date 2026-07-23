@@ -321,113 +321,136 @@ function homeNextMonth(){ if(monthKey(state.currentMonth)>=monthKey(new Date()))
 function updateMonthTitle(){ $('home-month-title').textContent=`${state.currentMonth.getFullYear()}年${state.currentMonth.getMonth()+1}月`; }
 
 // ============================================================
-//  图表页
+//  图表页 - 状态
 // ============================================================
-async function renderStats() { await refreshStats(); }
+function _initStats(){ return { period:'week', cursor:new Date(), catPeriod:'week', catCursor:new Date(), catName:'', catSortByAmount:true, catExpanded:false, catAllTags:[] }; }
+Object.assign(state, _initStats());
 
-function switchStatsType(t){
-  state.statsType=t;
-  document.querySelectorAll('#stats-type-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.type===t));
-  refreshStats();
+function _weekRange(d){ const day=d.getDay()||7; const mon=new Date(d); mon.setDate(d.getDate()-day+1); const start=mon.toISOString().split('T')[0]; const sun=new Date(mon); sun.setDate(mon.getDate()+6); return {start,end:sun.toISOString().split('T')[0],labels:[]}; }
+function _dateLabels(period,cursor){
+  if(period==='week'){
+    const r=_weekRange(cursor); const arr=[]; const s=new Date(r.start);
+    for(let i=0;i<7;i++){ const d=new Date(s);d.setDate(s.getDate()+i); arr.push((d.getMonth()+1)+'-'+d.getDate()); }
+    return {start:r.start,end:r.end,labels:arr};
+  } else if(period==='month'){
+    const y=cursor.getFullYear(),m=cursor.getMonth(); const start=`${y}-${String(m+1).padStart(2,'0')}-01`;
+    const days=new Date(y,m+1,0).getDate(); const end=`${y}-${String(m+1).padStart(2,'0')}-${days}`;
+    const labels=[]; for(let d=1;d<=days;d++) labels.push((m+1)+'-'+d); return {start,end,labels};
+  } else {
+    const y=cursor.getFullYear(); return {start:`${y}-01-01`,end:`${y}-12-31`,labels:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']};
+  }
 }
+function _periodTitle(period,cursor){
+  if(period==='week'){ const r=_weekRange(cursor); return r.start+' ~ '+r.end; }
+  else if(period==='month') return `${cursor.getFullYear()}年${cursor.getMonth()+1}月`;
+  else return `${cursor.getFullYear()}年`;
+}
+
+// ============================================================
+//  图表总览
+// ============================================================
+async function renderStats(){ await refreshStatsOverview(); }
 function switchStatsPeriod(p){
-  state.statsPeriod=p; state.statsDate=new Date();
-  document.querySelectorAll('#stats-period-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.period===p));
-  document.getElementById('stats-month-picker').style.display=p==='month'?'flex':'none';
-  refreshStats();
+  state.statsPeriod=p; state.statsCursor=new Date();
+  document.querySelectorAll('#stats-period-bar button').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  refreshStatsOverview();
 }
-function statsPrevMonth(){
-  if(state.statsPeriod==='month') state.statsDate.setMonth(state.statsDate.getMonth()-1);
-  else state.statsDate.setFullYear(state.statsDate.getFullYear()-1);
-  refreshStats();
-}
-function statsNextMonth(){
-  const now=new Date();
-  if(state.statsPeriod==='month'){
-    if(monthKey(state.statsDate)>=monthKey(now))return;
-    state.statsDate.setMonth(state.statsDate.getMonth()+1);
-  }else{
-    if(state.statsDate.getFullYear()>=now.getFullYear())return;
-    state.statsDate.setFullYear(state.statsDate.getFullYear()+1);
-  }
-  refreshStats();
+function statsNav(dir){
+  const p=state.statsPeriod, c=new Date(state.statsCursor);
+  if(p==='week') c.setDate(c.getDate()+dir*7);
+  else if(p==='month') c.setMonth(c.getMonth()+dir);
+  else c.setFullYear(c.getFullYear()+dir);
+  const now=new Date(); if(c>now&&dir>0) return;
+  state.statsCursor=c; refreshStatsOverview();
 }
 
-async function refreshStats() {
-  const period=state.statsPeriod, type=state.statsType;
-  const title=period==='month'?`${state.statsDate.getFullYear()}年${state.statsDate.getMonth()+1}月`:`${state.statsDate.getFullYear()}年`;
-  $('stats-period-title').textContent=title;
-  $('stats-next-period').style.visibility=(period==='month'?monthKey(state.statsDate)>=monthKey(new Date()):state.statsDate.getFullYear()>=new Date().getFullYear())?'hidden':'visible';
-
-  // 数据范围
-  let start,end,labels=[],labelFn;
-  if(period==='month') {
-    const r=monthRange(state.statsDate); start=r.start; end=r.end;
-    const days=new Date(state.statsDate.getFullYear(),state.statsDate.getMonth()+1,0).getDate();
-    for(let d=1;d<=days;d++) labels.push(d+'日');
-    labelFn=(i)=>i+1;
-  } else {
-    start=`${state.statsDate.getFullYear()}-01-01`;
-    end=`${state.statsDate.getFullYear()}-12-31`;
-    labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-    labelFn=(i)=>i+1;
-  }
-
-  const txns=await db.getTransactions({type,startDate:start,endDate:end});
-  const data=[];
-  if(period==='month'){
-    const days=new Date(state.statsDate.getFullYear(),state.statsDate.getMonth()+1,0).getDate();
-    for(let d=1;d<=days;d++){
-      const ds=`${state.statsDate.getFullYear()}-${String(state.statsDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      data.push(txns.filter(t=>t.date===ds).reduce((s,t)=>s+t.amount,0));
-    }
-  } else {
-    for(let m=1;m<=12;m++){
-      const ms=`${state.statsDate.getFullYear()}-${String(m).padStart(2,'0')}`;
-      data.push(txns.filter(t=>t.date.startsWith(ms)).reduce((s,t)=>s+t.amount,0));
-    }
-  }
-
-  // 柱状图
-  chartRenderer.renderMainBar('chart-main', labels, data, type);
-
-  // 分类排行
-  const catMap={};
-  txns.forEach(t=>{ catMap[t.category1]=(catMap[t.category1]||0)+t.amount; });
-  const total=data.reduce((a,b)=>a+b,0);
-  const rank=Object.entries(catMap).map(([n,a])=>({name:n,amount:a,pct:total>0?(a/total*100):0})).sort((a,b)=>b.amount-a.amount);
-  $('stats-rank').innerHTML=rank.map((r,i)=>`
-    <div class="rank-row" onclick="showCatDetail('${r.name}','${type}','${start}','${end}')">
-      <span class="rank-num ${i<3?'top':''}">${i+1}</span>
-      <span class="rank-icon">${catManager.getIcon(r.name)}</span>
-      <span class="rank-name">${r.name}</span>
-      <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${Math.min(r.pct,100)}%"></div></div>
-      <span class="rank-amount">¥${fmtInt(r.amount)}</span>
-      <span class="rank-pct">${r.pct.toFixed(1)}%</span>
-    </div>`).join('')||'<div class="empty-state"><div class="empty-state-text">暂无数据</div></div>';
-}
-
-async function showCatDetail(cat1,type,start,end){
-  const txns=await db.getTransactions({type,category1:cat1,startDate:start,endDate:end});
-  // 按标签汇总
-  const map={};
-  txns.forEach(t=>{
-    const k=t.tag||t.category2||'无标签';
-    if(k==='自定义') { map['无标签']=(map['无标签']||0)+t.amount; }
-    else { map[k]=(map[k]||0)+t.amount; }
+async function refreshStatsOverview(){
+  const {period,cursor}=state;
+  $('stats-date-title').textContent=_periodTitle(period,cursor);
+  const {start,end,labels}=_dateLabels(period,cursor);
+  const txns=await db.getTransactions({type:'expense',startDate:start,endDate:end});
+  // 每日汇总
+  const dailyData=labels.map(lbl=>{
+    let ds; if(period==='year'){ const m=parseInt(lbl); ds=`${cursor.getFullYear()}-${String(m).padStart(2,'0')}`; return txns.filter(t=>t.date.startsWith(ds)).reduce((s,t)=>s+t.amount,0); }
+    else{ const parts=lbl.split('-'); const m=parseInt(parts[0]),d=parseInt(parts[1]); ds=`${cursor.getFullYear()}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; return txns.filter(t=>t.date===ds).reduce((s,t)=>s+t.amount,0); }
   });
-  const list=Object.entries(map).map(([n,a])=>({name:n,amount:a})).sort((a,b)=>b.amount-a.amount);
-  const total=list.reduce((s,c)=>s+c.amount,0);
-  const html=`
-    <div class="page active" id="page-cat-detail">
-      <div class="nav-header"><button class="nav-icon" onclick="closeSubPage('page-cat-detail','stats')">←</button><div class="nav-title">${catManager.getIcon(cat1)} ${cat1}</div><div style="width:36px"></div></div>
-      <div class="text-center mt-16"><div style="font-size:13px;color:var(--text-secondary)">总计</div><div style="font-size:30px;font-weight:800;color:${type==='income'?'var(--income)':'var(--expense)'}">¥${fmt(total)}</div></div>
-      <div class="section-title">按标签汇总</div>
-      <div class="category-rank">${list.map((c,i)=>`<div class="rank-row" style="cursor:default"><span class="rank-num ${i<3?'top':''}">${i+1}</span><span class="rank-name">🏷️ ${c.name}</span><span class="rank-amount">¥${fmt(c.amount)}</span><span class="rank-pct">${total>0?(c.amount/total*100).toFixed(1):0}%</span></div>`).join('')||'<div class="empty-state"><div class="empty-state-text">暂无数据</div></div>'}</div>
-    </div>`;
-  const old=document.querySelector('.page.active');if(old)old.classList.remove('active');
-  const tmp=document.createElement('div');tmp.innerHTML=html;document.getElementById('app').appendChild(tmp.firstElementChild);
+  const total=dailyData.reduce((a,b)=>a+b,0);
+  const avg=labels.length>0?total/labels.length:0;
+  // 最大单笔
+  const maxTxn=txns.reduce((max,t)=>t.amount>(max?.amount||0)?t:max,null);
+  $('stats-max-amount').textContent=maxTxn?`最大单笔 ¥${fmt(maxTxn.amount)}`:'';
+  // 折线图
+  chartRenderer.renderLine('chart-main-line',labels,dailyData,avg);
+  // 分类排行
+  const catMap={}; txns.forEach(t=>{ catMap[t.category1]=(catMap[t.category1]||0)+t.amount; });
+  const rank=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  $('stats-rank-list').innerHTML=rank.length?rank.map(([n,a],i)=>`<div class="rank-row" onclick="openCatStats('${n}')"><span class="rank-num ${i<3?'top':''}">${i+1}</span><span class="rank-icon">${catManager.getIcon(n)}</span><span class="rank-name">${n}</span><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${total>0?Math.min(a/total*100,100):0}%"></div></div><span class="rank-amount">¥${fmt(a)}</span></div>`).join(''):'<div class="empty-state"><div class="empty-state-text">暂无支出数据</div></div>';
+  // 点击数据点 → 弹窗
+  window._statsLabels=labels; window._statsTxns=txns; window._statsPeriod=period; window._statsCursor=cursor;
 }
+
+// 弹窗：当日明细
+async function openDayDetail(idx){
+  const labels=window._statsLabels||[]; const lbl=labels[idx]; if(lbl===undefined) return;
+  let ds; const {period,cursor}=state;
+  if(period==='year'){ const m=parseInt(lbl); ds=`${cursor.getFullYear()}-${String(m).padStart(2,'0')}`; $('day-detail-title').textContent=lbl; }
+  else{ const parts=lbl.split('-'); const m=parseInt(parts[0]),d=parseInt(parts[1]); ds=`${cursor.getFullYear()}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; $('day-detail-title').textContent=lbl; }
+  const txns=period==='year'?(window._statsTxns||[]).filter(t=>t.date.startsWith(ds)):(window._statsTxns||[]).filter(t=>t.date===ds);
+  $('day-detail-list').innerHTML=txns.length?txns.map(t=>txnRowHTML(t)).join(''):'<div class="empty-state"><div class="empty-state-text">当天无记录</div></div>';
+  $('overlay-day-detail').classList.remove('hidden');
+}
+function closeDayDetail(){$('overlay-day-detail').classList.add('hidden');}
+
+// ============================================================
+//  科目详情页
+// ============================================================
+function openCatStats(cat1){
+  hideAllPages();
+  state.catName=cat1; state.catPeriod='week'; state.catCursor=new Date(); state.catSortByAmount=true; state.catExpanded=false;
+  document.querySelectorAll('#cat-period-bar button').forEach(b=>b.classList.toggle('active',b.dataset.p==='week'));
+  $('cat-sort-btn').textContent='按时间'; $('cat-sort-hint').textContent='按金额排序';
+  $('cat-stats-title').textContent=catManager.getIcon(cat1)+' '+cat1;
+  $('page-cat-stats').classList.add('active');
+  document.querySelector('.tab-bar').style.display='none';
+  refreshCatStats();
+}
+function closeCatStats(){ hideAllPages(); $('page-transactions').classList.add('active'); document.querySelector('.tab-bar').style.display='flex'; }
+function switchCatPeriod(p){ state.catPeriod=p; state.catCursor=new Date(); document.querySelectorAll('#cat-period-bar button').forEach(b=>b.classList.toggle('active',b.dataset.p===p)); refreshCatStats(); }
+function catNav(dir){ const p=state.catPeriod; const c=new Date(state.catCursor); if(p==='week')c.setDate(c.getDate()+dir*7); else if(p==='month')c.setMonth(c.getMonth()+dir); else c.setFullYear(c.getFullYear()+dir); const now=new Date(); if(c>now&&dir>0) return; state.catCursor=c; refreshCatStats(); }
+function toggleCatSort(){ state.catSortByAmount=!state.catSortByAmount; $('cat-sort-btn').textContent=state.catSortByAmount?'按时间':'按金额'; $('cat-sort-hint').textContent=state.catSortByAmount?'按金额排序':'按时间排序'; renderCatRank(); }
+function expandCatRank(){ state.catExpanded=true; $('cat-expand-btn').style.display='none'; renderCatRank(); }
+
+async function refreshCatStats(){
+  const {catName,catPeriod,catCursor}=state;
+  $('cat-date-title').textContent=_periodTitle(catPeriod,catCursor);
+  const {start,end,labels}=_dateLabels(catPeriod,catCursor);
+  const txns=await db.getTransactions({type:'expense',category1:catName,startDate:start,endDate:end});
+  const dailyData=labels.map(lbl=>{
+    let ds; if(catPeriod==='year'){ const m=parseInt(lbl); ds=`${catCursor.getFullYear()}-${String(m).padStart(2,'0')}`; return txns.filter(t=>t.date.startsWith(ds)).reduce((s,t)=>s+t.amount,0); }
+    else{ const parts=lbl.split('-'); const m=parseInt(parts[0]),d=parseInt(parts[1]); ds=`${catCursor.getFullYear()}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; return txns.filter(t=>t.date===ds).reduce((s,t)=>s+t.amount,0); }
+  });
+  const total=dailyData.reduce((a,b)=>a+b,0);
+  const avg=total/labels.length||0;
+  chartRenderer.renderLine('chart-cat-line',labels,dailyData,avg);
+  // 标签汇总
+  const tagMap={}; txns.forEach(t=>{ const k=t.tag||'无标签'; tagMap[k]=(tagMap[k]||0)+t.amount; });
+  state.catAllTags=Object.entries(tagMap).map(([n,a])=>({name:n,amount:a,latest:txns.filter(t=>(t.tag||'无标签')===n).sort((a,b)=>b.date.localeCompare(a.date))[0]?.date||''})).sort((a,b)=>state.catSortByAmount?b.amount-a.amount:a.latest.localeCompare(b.latest));
+  renderCatRank();
+  // 饼图
+  chartRenderer.renderPie('chart-cat-pie',state.catAllTags.map(t=>({name:t.name,amount:t.amount})));
+  // 下方完整标签列表
+  $('cat-full-list').innerHTML=state.catAllTags.map((t,i)=>`<div class="rank-row" style="cursor:default"><span class="rank-num ${i<3?'top':''}">${i+1}</span><span class="rank-name">🏷️ ${t.name}</span><span class="rank-amount">¥${fmt(t.amount)}</span></div>`).join('')||'<div class="empty-state"><div class="empty-state-text">暂无数据</div></div>';
+}
+
+function renderCatRank(){
+  const {catAllTags,catExpanded}=state;
+  const list=catExpanded?catAllTags:catAllTags.slice(0,3);
+  const total=catAllTags.reduce((s,t)=>s+t.amount,0);
+  $('cat-rank-list').innerHTML=list.map((t,i)=>`<div class="rank-row" style="cursor:default"><span class="rank-num ${i<3?'top':''}">${i+1}</span><span class="rank-name">🏷️ ${t.name}</span><span class="rank-amount">¥${fmt(t.amount)}</span><span class="rank-pct">${total>0?(t.amount/total*100).toFixed(1):0}%</span></div>`).join('')||'<div class="empty-state"><div class="empty-state-text">暂无数据</div></div>';
+  $('cat-expand-btn').style.display=(!catExpanded&&catAllTags.length>3)?'block':'none';
+}
+
+// (旧 showCatDetail 已由 openCatStats + refreshCatStats 替代)
 
 function closeSubPage(pageId,tab){ const el=document.getElementById(pageId);if(el)el.remove();switchTab(tab);}
 
