@@ -5,7 +5,7 @@
 const state = {
   currentTab: 'transactions', currentMonth: new Date(),
   // 记账 Sheet
-  sheetType: 'expense', sheetCat1: '', sheetTag: '', sheetAmount: 0, sheetInput: '',
+  sheetType: 'expense', sheetCat1: '', sheetTag: '', sheetAmount: 0, amountStr: '',
   sheetDate: '', editingTxnId: null,
   // 图表（period/cursor 由 _initStats 初始化）
   // 搜索
@@ -68,8 +68,7 @@ function switchTab(tab) {
 // ============================================================
 function openSheet() {
   state.sheetType='expense'; state.sheetCat1=''; state.sheetTag=''; state.sheetAmount=0;
-  state._digits=[]; state._isNegative=false;
-  state.sheetDate=today(); state.editingTxnId=null;
+  state.amountStr=''; state.sheetDate=today(); state.editingTxnId=null;
   $('step2-note').value='';
   updateSheetSegment();
   renderSheetCatGrid();
@@ -117,14 +116,15 @@ function step2SwitchType(type){
   renderStep2CatGrid();
 }
 function sheetSelectCat(cat1){
-  state.sheetCat1=cat1; state.sheetTag=''; state._digits=[];
+  state.sheetCat1=cat1; state.sheetTag=''; state.amountStr=''; state.sheetAmount=0;
   // 根据科目类型自动切换 segment
-  if(catManager.isIncome(cat1)){ state.sheetType='income'; }
-  else { state.sheetType='expense'; }
-  step2UpdateSegment();
+  if(catManager.isIncome(cat1)) state.sheetType='income';
+  else state.sheetType='expense';
   $('step2-note').value='';
   $('sheet-step1').classList.remove('active');
   $('sheet-step2').classList.add('active');
+  // 立即更新 segment 后再渲染
+  step2UpdateSegment();
   renderStep2CatGrid();
   updateAmountDisplay();
   renderStep2Tags();
@@ -153,33 +153,33 @@ function sheetBackToStep1(){
   updateSheetOtherTotal();
 }
 
-// 金额推移逻辑（输入1→0.01, 12→0.12, 123→1.23）
-state._digits=[];
+// 金额输入（元模式：输入1→1, 12→12, 12.5→12.50）
+state.amountStr='';
 function nk(key){
-  if(key==='⌫'){ state._digits.pop(); }
+  if(key==='⌫'){ state.amountStr=state.amountStr.slice(0,-1); }
   else if(key==='.'){
-    // 忽略小数点，金额始终保留2位小数
+    if(!state.amountStr.includes('.')) state.amountStr+='.';
   }
   else {
-    if(state._digits.length>=10) return; // 最多10位
-    state._digits.push(key);
+    if(state.amountStr==='0') state.amountStr=key;
+    else if(state.amountStr.length>=10) return;
+    else state.amountStr+=key;
   }
   updateAmountDisplay();
 }
 function updateAmountDisplay(){
-  const d=[...state._digits];
-  while(d.length<2) d.unshift('0');
-  const intPart=d.slice(0,-2).join('')||'0';
-  const decPart=d.slice(-2).join('');
-  state.sheetAmount=parseFloat(intPart+'.'+decPart)||0;
-  const sign=state._isNegative?'-':'';
-  $('step2-amount').innerHTML='¥<span>'+sign+intPart+'.'+decPart+'</span>';
+  let v=state.amountStr||'0';
+  if(!v.includes('.')) v+='.00';
+  else {
+    const p=v.split('.');
+    if(p[1].length===0) p[1]='00';
+    else if(p[1].length===1) p[1]+='0';
+    else p[1]=p[1].slice(0,2);
+    v=p.join('.');
+  }
+  state.sheetAmount=parseFloat(v)||0;
+  $('step2-amount').innerHTML='¥<span>'+v+'</span>';
 }
-function toggleSign(){
-  state._isNegative=!state._isNegative;
-  updateAmountDisplay();
-}
-
 // 标签区
 async function renderStep2Tags(){
   const tags=await catManager.getAllCat2List(state.sheetCat1,state.sheetType);
@@ -506,7 +506,7 @@ async function editTxnDetail(){
   const id=$('detail-id').dataset.id;const t=await db.getTransaction(id);if(!t)return;
   closeTxnDetail();
   state.editingTxnId=id;state.sheetType=t.type;state.sheetCat1=t.category1;
-  state.sheetTag=t.tag||'';state.sheetAmount=t.amount;state.sheetInput=fmt(t.amount);
+  state.sheetTag=t.tag||'';state.sheetAmount=t.amount;state.amountStr=fmt(t.amount);
   state.sheetDate=t.date;
   openSheet();
   // 直接跳到第二步
