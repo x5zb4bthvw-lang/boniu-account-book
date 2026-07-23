@@ -67,6 +67,14 @@ function switchTab(tab) {
 //  FAB → 打开底部 Sheet（两步流程）
 // ============================================================
 function openSheet() {
+  // 1. 隐藏当前活跃页面
+  const activePage=document.querySelector('.page.active');
+  if(activePage){ activePage.dataset.previousActive='true'; activePage.classList.remove('active'); }
+  // 2. 隐藏底部 TabBar
+  document.querySelector('.tab-bar').style.display='none';
+  // 3. 禁止底层滚动
+  document.body.style.overflow='hidden';
+  // 4. 重置状态
   state.sheetType='expense'; state.sheetCat1=''; state.sheetTag=''; state.sheetAmount=0;
   state.amountStr=''; state.sheetDate=today(); state.editingTxnId=null;
   $('step2-note').value='';
@@ -76,7 +84,14 @@ function openSheet() {
   $('sheet-step1').classList.add('active'); $('sheet-step2').classList.remove('active');
   $('sheet-overlay').classList.remove('hidden');
 }
-function closeSheet() { $('sheet-overlay').classList.add('hidden'); }
+function closeSheet() {
+  $('sheet-overlay').classList.add('hidden');
+  document.querySelector('.tab-bar').style.display='flex';
+  document.body.style.overflow='';
+  const prevPage=document.querySelector('[data-previous-active="true"]');
+  if(prevPage){ prevPage.classList.add('active'); prevPage.removeAttribute('data-previous-active'); }
+  else { $('page-transactions').classList.add('active'); }
+}
 
 function sheetSwitchType(type) {
   state.sheetType=type; state.sheetCat1='';
